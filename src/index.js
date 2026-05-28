@@ -27,10 +27,10 @@ async function callTool(name, a) {
   switch (name) {
     // ─── BRAND ──────────────────────────────────────────────────────────────
     case 'getBrandProfile':
-      return api.get('/brand');
+      return api.get('/brand/profile');
 
     case 'updateBrandProfile':
-      return api.patch('/brand', a);
+      return api.put('/brand/profile', a);
 
     // ─── CAMPAIGNS ──────────────────────────────────────────────────────────
     case 'listCampaigns':

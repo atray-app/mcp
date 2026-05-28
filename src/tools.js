@@ -146,15 +146,17 @@ export const tools = [
 
   {
     name: 'createPost',
-    description: 'Creates a standalone post draft (not linked to a campaign). Provide context for AI text generation. Image generation happens after a separate regeneratePostImage call.',
+    description: 'Creates a standalone post draft. Use type="carousel" with image_descriptions[] (3-6 items) for a carousel post. Default type="text" uses image_description for a single image.',
     inputSchema: {
       type: 'object',
       properties: {
         campaign_id:        { type: 'string', description: 'Campaign UUID to link to (optional)' },
+        type:               { type: 'string', enum: ['text', 'carousel'], description: 'Post type (default: text)' },
         caption_text:       { type: 'string', description: 'Post caption text' },
         cta:                { type: 'string', description: 'Call-to-action text (e.g. "Link in bio")' },
         hashtags:           { type: 'array', items: { type: 'string' }, description: 'Hashtags (without #)' },
-        image_description:  { type: 'string', description: 'Description for AI image generation' },
+        image_description:  { type: 'string', description: 'Image description for single-image posts (type=text)' },
+        image_descriptions: { type: 'array', items: { type: 'string' }, description: 'Image description per slide for carousel posts (type=carousel, 3-6 items)' },
         context:            { type: 'string', description: 'Context/brief for AI text generation (required for standalone posts)' },
         image_text_enabled: { type: 'boolean', description: 'Include text overlay in generated image (default: true)' },
         image_logo_enabled: { type: 'boolean', description: 'Include brand logo in generated image (default: true)' },
@@ -185,7 +187,8 @@ export const tools = [
         caption_text:       { type: 'string' },
         cta:                { type: 'string' },
         hashtags:           { type: 'array', items: { type: 'string' } },
-        image_description:  { type: 'string', description: 'Description for AI image generation' },
+        image_description:  { type: 'string', description: 'Image description for single-image posts' },
+        image_descriptions: { type: 'array', items: { type: 'string' }, description: 'Image descriptions per slide for carousel posts (3-6 items)' },
         context:            { type: 'string', description: 'Context/brief for AI text generation' },
         status:             { type: 'string', enum: ['draft', 'scheduled', 'published'] },
         scheduled_at:       { type: 'string', description: 'Publish datetime (ISO-8601, must be in the future)' },
@@ -209,13 +212,14 @@ export const tools = [
 
   {
     name: 'regeneratePostImage',
-    description: 'Generates a new image for the post using AI (based on image_description). From the 6th generation onwards, an extra credit is charged - confirm with confirm_extra_content: true.',
+    description: 'Generates a new image for the post using AI. For carousel posts, regenerates all slides or a specific slide via slot_index. From the 6th generation onwards, an extra credit is charged - confirm with confirm_extra_content: true.',
     inputSchema: {
       type: 'object',
       required: ['id'],
       properties: {
         id:                    { type: 'string', description: 'Post UUID' },
         confirm_extra_content: { type: 'boolean', description: 'Set true to confirm extra credit charge (6th+ generation)' },
+        slot_index:            { type: 'integer', minimum: 0, maximum: 5, description: 'Carousel slide index to regenerate (omit to regenerate all slides)' },
       },
     },
   },

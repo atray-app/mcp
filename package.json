@@ -18,6 +18,20 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["mcp", "atray", "ai", "instagram", "content"],
-  "license": "MIT"
+  "keywords": ["mcp", "atray", "ai", "instagram", "content", "social-media", "automation"],
+  "license": "MIT",
+  "author": {
+    "name": "ATRAY",
+    "email": "contato@atray.app",
+    "url": "https://atray.app"
+  },
+  "homepage": "https://atray.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atray-app/mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/atray-app/mcp/issues",
+    "email": "contato@atray.app"
+  }
 }

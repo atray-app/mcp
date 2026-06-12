@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -77,6 +80,9 @@ async function callTool(name, a) {
       return api.post(`/posts/${id}/regenerate-image`, body);
     }
 
+    case 'uploadPostVideo':
+      return uploadPostVideo(a);
+
     // ─── API KEYS ────────────────────────────────────────────────────────────
     case 'listApiKeys':
       return api.get('/api-keys');
@@ -95,6 +101,43 @@ async function callTool(name, a) {
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+const VIDEO_MIME = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };
+const VIDEO_MAX_BYTES = 120 * 1024 * 1024;
+
+/** Sobe um vídeo (arquivo local ou URL) como mídia do post. Publicado no Instagram vira Reel. */
+async function uploadPostVideo({ id, file_path, video_url }) {
+  if (!id) throw new Error('id (post UUID) is required');
+  if (!file_path && !video_url) throw new Error('Provide file_path (local file) or video_url (public URL)');
+
+  let buffer;
+  let filename;
+  if (file_path) {
+    buffer = await readFile(file_path);
+    filename = basename(file_path);
+  } else {
+    const res = await fetch(video_url);
+    if (!res.ok) throw new Error(`Failed to download video_url: HTTP ${res.status}`);
+    buffer = Buffer.from(await res.arrayBuffer());
+    filename = basename(new URL(video_url).pathname) || 'video.mp4';
+    if (!/\.(mp4|mov|webm)$/i.test(filename)) {
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      const ext = Object.keys(VIDEO_MIME).find((k) => VIDEO_MIME[k] === ct.split(';')[0].trim());
+      if (ext) filename = 'video.' + ext;
+    }
+  }
+
+  const m = filename.toLowerCase().match(/\.(mp4|mov|webm)$/);
+  if (!m) throw new Error('Video must be .mp4, .mov or .webm');
+  if (buffer.length > VIDEO_MAX_BYTES) throw new Error('Video exceeds the 120 MB limit');
+
+  return api.upload(`/posts/${id}/video`, {
+    field: 'video',
+    buffer,
+    filename,
+    contentType: VIDEO_MIME[m[1]],
+  });
 }
 
 const transport = new StdioServerTransport();

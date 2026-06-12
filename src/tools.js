@@ -224,6 +224,20 @@ export const tools = [
     },
   },
 
+  {
+    name: 'uploadPostVideo',
+    description: 'Uploads a video (mp4, mov or webm; up to 120 MB) as the post media, replacing the current image/video. Provide either file_path (local file) or video_url (public URL to download from). When the post is published to Instagram, videos are posted as Reels (also shared to the feed). Scheduling works the same as image posts.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:        { type: 'string', description: 'Post UUID' },
+        file_path: { type: 'string', description: 'Absolute path to a local video file (mp4, mov, webm)' },
+        video_url: { type: 'string', description: 'Public URL of the video to download and upload' },
+      },
+    },
+  },
+
   // ─── API KEYS ─────────────────────────────────────────────────────────────
 
   {

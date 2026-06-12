@@ -38,6 +38,36 @@ async function request(method, path, { body, query } = {}) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
+  return parseResponse(res);
+}
+
+/**
+ * Multipart/form-data upload (e.g. post video). The Content-Type header
+ * (with boundary) is set automatically by fetch from the FormData body.
+ * @param {string} path        - API path, e.g. '/posts/<id>/video'
+ * @param {object} opts
+ * @param {string} opts.field       - Form field name, e.g. 'video'
+ * @param {Buffer} opts.buffer      - File contents
+ * @param {string} opts.filename    - Original file name (extension matters)
+ * @param {string} opts.contentType - File MIME type
+ */
+async function upload(path, { field, buffer, filename, contentType }) {
+  const form = new FormData();
+  form.append(field, new Blob([buffer], { type: contentType }), filename);
+
+  const res = await fetch(BASE_URL + path, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Accept': 'application/json',
+    },
+    body: form,
+  });
+
+  return parseResponse(res);
+}
+
+async function parseResponse(res) {
   const text = await res.text();
   let data;
   try { data = JSON.parse(text); } catch { data = { raw: text }; }
@@ -59,4 +89,5 @@ export const api = {
   put:    (path, body)        => request('PUT',    path, { body }),
   patch:  (path, body)        => request('PATCH',  path, { body }),
   delete: (path)              => request('DELETE', path),
+  upload,
 };

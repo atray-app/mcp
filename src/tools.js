@@ -237,4 +237,31 @@ export const tools = [
       },
     },
   },
+
+  // ─── SOCIAL CONNECTIONS (read-only) ─────────────────────────────────────────
+
+  {
+    name: 'listSocialConnections',
+    description: "Lists the user's connected social accounts (Instagram, etc.) with id, platform, username and status. Use the connection id as social_connection_id when scheduling a standalone post. Read-only: connecting and managing accounts is done in the Studio.",
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+
+  // ─── PUBLISH / SCHEDULE ─────────────────────────────────────────────────────
+
+  {
+    name: 'schedulePost',
+    description: 'Schedules a post for publishing: marks it as scheduled and creates the delivery job (the worker publishes at scheduled_at). Omit scheduled_at to publish as soon as possible. For standalone posts (no campaign) you MUST pass social_connection_id (get it from listSocialConnections). Campaign posts publish to the campaign accounts.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:                   { type: 'string', description: 'Post UUID' },
+        scheduled_at:         { type: 'string', description: 'Publish datetime (ISO-8601). Omit to publish as soon as possible.' },
+        social_connection_id: { type: 'string', description: 'Target account UUID (from listSocialConnections). Required for standalone posts.' },
+      },
+    },
+  },
 ];

@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.2' },
+  { name: 'atray-mcp', version: '1.0.3' },
   { capabilities: { tools: {} } }
 );
 
@@ -82,6 +82,16 @@ async function callTool(name, a) {
 
     case 'uploadPostVideo':
       return uploadPostVideo(a);
+
+    // ─── SOCIAL CONNECTIONS (read-only) ───────────────────────────────────────
+    case 'listSocialConnections':
+      return api.get('/social-connections');
+
+    // ─── PUBLISH / SCHEDULE ───────────────────────────────────────────────────
+    case 'schedulePost': {
+      const { id, ...body } = a;
+      return api.post(`/posts/${id}/schedule`, body);
+    }
 
     default:
       throw new Error(`Unknown tool: ${name}`);

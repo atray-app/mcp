@@ -1,6 +1,6 @@
 # ATRAY MCP
 
-[![npm version](https://img.shields.io/npm/v/atray-mcp.svg)](https://www.npmjs.com/package/atray-mcp)
+[![npm version](https://img.shields.io/npm/v/@atray/mcp.svg)](https://www.npmjs.com/package/@atray/mcp)
 
 MCP (Model Context Protocol) server for the [ATRAY](https://atray.app) API. Lets an AI
 assistant (Claude, Claude Code, Cursor, and any other MCP client) manage your ATRAY
@@ -21,7 +21,7 @@ campaigns, posts, and brand profile in natural language.
 ### Claude Code (CLI), one command
 
 ```bash
-claude mcp add atray -e ATRAY_API_KEY=atray_your_key -- npx -y atray-mcp
+claude mcp add atray -e ATRAY_API_KEY=atray_your_key -- npx -y @atray/mcp
 ```
 
 ### Manual config (Claude Desktop, Cursor, and others)
@@ -33,7 +33,7 @@ Add this to your client's MCP config (in Claude Desktop, `claude_desktop_config.
   "mcpServers": {
     "atray": {
       "command": "npx",
-      "args": ["-y", "atray-mcp"],
+      "args": ["-y", "@atray/mcp"],
       "env": { "ATRAY_API_KEY": "atray_your_key" }
     }
   }

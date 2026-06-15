@@ -1,5 +1,5 @@
 {
-  "name": "atray-mcp",
+  "name": "@atray/mcp",
   "version": "1.0.0",
   "description": "MCP server for ATRAY API - manage campaigns, posts and brand profile via AI",
   "type": "module",
@@ -9,6 +9,9 @@
   "files": [
     "src/"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "node src/index.js"
   },

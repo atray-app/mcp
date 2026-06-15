@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.3' },
+  { name: 'atray-mcp', version: '1.0.4' },
   { capabilities: { tools: {} } }
 );
 

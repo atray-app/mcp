@@ -152,6 +152,7 @@ export const tools = [
       properties: {
         campaign_id:        { type: 'string', description: 'Campaign UUID to link to (optional)' },
         type:               { type: 'string', enum: ['text', 'carousel'], description: 'Post type (default: text)' },
+        placement:          { type: 'string', enum: ['feed', 'story'], description: 'Publish destination (default: feed). "story" publishes as an Instagram Story (single media only; not for carousel).' },
         caption_text:       { type: 'string', description: 'Post caption text' },
         cta:                { type: 'string', description: 'Call-to-action text (e.g. "Link in bio")' },
         hashtags:           { type: 'array', items: { type: 'string' }, description: 'Hashtags (without #)' },
@@ -190,6 +191,7 @@ export const tools = [
         image_description:  { type: 'string', description: 'Image description for single-image posts' },
         image_descriptions: { type: 'array', items: { type: 'string' }, description: 'Image descriptions per slide for carousel posts (3-6 items)' },
         context:            { type: 'string', description: 'Context/brief for AI text generation' },
+        placement:          { type: 'string', enum: ['feed', 'story'], description: 'Publish destination: feed or story (Instagram Story). Carousel posts are always feed.' },
         status:             { type: 'string', enum: ['draft', 'scheduled', 'published'] },
         scheduled_at:       { type: 'string', description: 'Publish datetime (ISO-8601, must be in the future)' },
         image_text_enabled: { type: 'boolean' },

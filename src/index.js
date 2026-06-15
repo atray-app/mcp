@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.1' },
+  { name: 'atray-mcp', version: '1.0.2' },
   { capabilities: { tools: {} } }
 );
 
@@ -49,7 +49,7 @@ async function callTool(name, a) {
 
     case 'updateCampaign': {
       const { id, ...body } = a;
-      return api.patch(`/campaigns/${id}`, body);
+      return api.put(`/campaigns/${id}`, body);
     }
 
     case 'listCampaignPosts': {
@@ -69,7 +69,7 @@ async function callTool(name, a) {
 
     case 'updatePost': {
       const { id, ...body } = a;
-      return api.patch(`/posts/${id}`, body);
+      return api.put(`/posts/${id}`, body);
     }
 
     case 'regeneratePostText':

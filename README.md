@@ -59,10 +59,12 @@ Restart the client and the ATRAY tools become available.
 | `listPosts` / `createPost` / `getPost` / `updatePost` | Manage posts (text and carousel). |
 | `regeneratePostText` / `regeneratePostImage` | Regenerate caption or image with AI. |
 | `uploadPostVideo` | Upload a video (mp4/mov/webm, up to 120 MB) as the post media; published to Instagram as a Reel. |
-| `listApiKeys` / `createApiKey` / `updateApiKey` / `revokeApiKey` | Manage your API keys. |
 
 Each AI-generated post consumes 1 content credit from your plan. Creating a campaign
 requires a completed brand profile.
+
+> API keys are created and managed in the Studio (**Settings → API keys**), not through
+> the API/MCP.
 
 ## API reference
 

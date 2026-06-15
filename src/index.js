@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.0' },
+  { name: 'atray-mcp', version: '1.0.1' },
   { capabilities: { tools: {} } }
 );
 
@@ -82,21 +82,6 @@ async function callTool(name, a) {
 
     case 'uploadPostVideo':
       return uploadPostVideo(a);
-
-    // ─── API KEYS ────────────────────────────────────────────────────────────
-    case 'listApiKeys':
-      return api.get('/api-keys');
-
-    case 'createApiKey':
-      return api.post('/api-keys', a);
-
-    case 'updateApiKey': {
-      const { id, ...body } = a;
-      return api.patch(`/api-keys/${id}`, body);
-    }
-
-    case 'revokeApiKey':
-      return api.delete(`/api-keys/${a.id}`);
 
     default:
       throw new Error(`Unknown tool: ${name}`);

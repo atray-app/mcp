@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.4' },
+  { name: 'atray-mcp', version: '1.0.5' },
   { capabilities: { tools: {} } }
 );
 
@@ -80,6 +80,9 @@ async function callTool(name, a) {
       return api.post(`/posts/${id}/regenerate-image`, body);
     }
 
+    case 'uploadPostImage':
+      return uploadPostImage(a);
+
     case 'uploadPostVideo':
       return uploadPostVideo(a);
 
@@ -96,6 +99,37 @@ async function callTool(name, a) {
     default:
       throw new Error(`Unknown tool: ${name}`);
   }
+}
+
+const IMAGE_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+
+async function uploadPostImage({ id, file_path, image_url }) {
+  if (!id) throw new Error('id (post UUID) is required');
+  if (!file_path && !image_url) throw new Error('Provide file_path (local file) or image_url (public URL)');
+
+  let buffer;
+  let filename;
+  if (file_path) {
+    buffer = await readFile(file_path);
+    filename = basename(file_path);
+  } else {
+    const res = await fetch(image_url);
+    if (!res.ok) throw new Error(`Failed to download image_url: HTTP ${res.status}`);
+    buffer = Buffer.from(await res.arrayBuffer());
+    filename = basename(new URL(image_url).pathname) || 'image.jpg';
+    if (!/\.(jpg|jpeg|png|webp)$/i.test(filename)) {
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      const ext = Object.keys(IMAGE_MIME).find((k) => IMAGE_MIME[k] === ct.split(';')[0].trim());
+      if (ext) filename = 'image.' + ext;
+    }
+  }
+
+  const m = filename.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/);
+  if (!m) throw new Error('Image must be .jpg, .jpeg, .png or .webp');
+
+  const base64 = buffer.toString('base64');
+  const ext = m[1] === 'jpg' ? 'jpeg' : m[1];
+  return api.post(`/posts/${id}/image`, { image: `data:image/${ext};base64,${base64}`, filename });
 }
 
 const VIDEO_MIME = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };

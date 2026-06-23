@@ -227,6 +227,20 @@ export const tools = [
   },
 
   {
+    name: 'uploadPostImage',
+    description: 'Uploads a custom image (jpg, jpeg, png or webp) as the post media, replacing the current AI-generated image. Provide either file_path (local file) or image_url (public URL to download from).',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:        { type: 'string', description: 'Post UUID' },
+        file_path: { type: 'string', description: 'Absolute path to a local image file (jpg, jpeg, png, webp)' },
+        image_url: { type: 'string', description: 'Public URL of the image to download and upload' },
+      },
+    },
+  },
+
+  {
     name: 'uploadPostVideo',
     description: 'Uploads a video (mp4, mov or webm; up to 120 MB) as the post media, replacing the current image/video. Provide either file_path (local file) or video_url (public URL to download from). When the post is published to Instagram, videos are posted as Reels (also shared to the feed). Scheduling works the same as image posts.',
     inputSchema: {

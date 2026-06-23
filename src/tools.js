@@ -228,14 +228,15 @@ export const tools = [
 
   {
     name: 'uploadPostImage',
-    description: 'Uploads a custom image (jpg, jpeg, png or webp) as the post media, replacing the current AI-generated image. Provide either file_path (local file) or image_url (public URL to download from).',
+    description: 'Uploads a custom image (jpg, jpeg, png or webp) as the post media, replacing the current AI-generated image. Provide either file_path (local file) or image_url (public URL to download from). For carousel posts, use slot_index (0-based) to target a specific slide; omit to replace slide 0.',
     inputSchema: {
       type: 'object',
       required: ['id'],
       properties: {
-        id:        { type: 'string', description: 'Post UUID' },
-        file_path: { type: 'string', description: 'Absolute path to a local image file (jpg, jpeg, png, webp)' },
-        image_url: { type: 'string', description: 'Public URL of the image to download and upload' },
+        id:         { type: 'string', description: 'Post UUID' },
+        file_path:  { type: 'string', description: 'Absolute path to a local image file (jpg, jpeg, png, webp)' },
+        image_url:  { type: 'string', description: 'Public URL of the image to download and upload' },
+        slot_index: { type: 'number', description: 'Carousel slide index (0-based). Required to fill slides beyond the first one.' },
       },
     },
   },

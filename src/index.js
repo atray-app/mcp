@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.5' },
+  { name: 'atray-mcp', version: '1.0.6' },
   { capabilities: { tools: {} } }
 );
 
@@ -103,7 +103,7 @@ async function callTool(name, a) {
 
 const IMAGE_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 
-async function uploadPostImage({ id, file_path, image_url }) {
+async function uploadPostImage({ id, file_path, image_url, slot_index }) {
   if (!id) throw new Error('id (post UUID) is required');
   if (!file_path && !image_url) throw new Error('Provide file_path (local file) or image_url (public URL)');
 
@@ -129,7 +129,9 @@ async function uploadPostImage({ id, file_path, image_url }) {
 
   const base64 = buffer.toString('base64');
   const ext = m[1] === 'jpg' ? 'jpeg' : m[1];
-  return api.post(`/posts/${id}/image`, { image: `data:image/${ext};base64,${base64}`, filename });
+  const body = { image: `data:image/${ext};base64,${base64}`, filename };
+  if (slot_index != null) body.slot_index = Number(slot_index);
+  return api.post(`/posts/${id}/image`, body);
 }
 
 const VIDEO_MIME = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };

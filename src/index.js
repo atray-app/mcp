@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.7' },
+  { name: 'atray-mcp', version: '1.0.8' },
   { capabilities: { tools: {} } }
 );
 
@@ -71,6 +71,9 @@ async function callTool(name, a) {
       const { id, ...body } = a;
       return api.put(`/posts/${id}`, body);
     }
+
+    case 'deletePost':
+      return api.delete(`/posts/${a.id}`);
 
     case 'regeneratePostText':
       return api.post(`/posts/${a.id}/regenerate-text`);

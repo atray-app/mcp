@@ -179,6 +179,18 @@ export const tools = [
   },
 
   {
+    name: 'deletePost',
+    description: 'Permanently deletes a post and all its associated media. This action is irreversible.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id: { type: 'string', description: 'Post UUID' },
+      },
+    },
+  },
+
+  {
     name: 'updatePost',
     description: 'Updates a post. Only send the fields you want to change. Supports updating caption, CTA, hashtags, image description, context and image generation settings.',
     inputSchema: {

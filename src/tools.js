@@ -12,7 +12,7 @@ export const tools = [
 
   {
     name: 'getBrandProfile',
-    description: "Returns the authenticated user's brand profile: name, description, target audience, tone of voice and CTA default.",
+    description: "Returns the authenticated user's brand profile (the \"My business\" DNA): business name, segment, city, what it sells, ticket range, differentiator, main products, target audience, audience pains, objections, tone of voice, emoji preference, preferred/forbidden words and brand colors. Also returns server-managed fields logo_path, brand_manual_path and brand_analysis_count.",
     inputSchema: {
       type: 'object',
       properties: {},
@@ -21,15 +21,27 @@ export const tools = [
 
   {
     name: 'updateBrandProfile',
-    description: "Updates the brand profile. Only send the fields you want to change.",
+    description: "Updates the brand profile (the \"My business\" DNA). Only send the fields you want to change; all are optional. Logo and brand manual are set via their own endpoints and cannot be changed here.",
     inputSchema: {
       type: 'object',
       properties: {
-        name:            { type: 'string', description: 'Brand/company name' },
-        description:     { type: 'string', description: 'Business description' },
-        target_audience: { type: 'string', description: 'Target audience' },
-        tone:            { type: 'string', enum: ['professional', 'friendly', 'direct', 'premium'], description: 'Tone of voice' },
-        cta_default:     { type: 'string', description: 'Default call-to-action text for posts' },
+        business_name:    { type: 'string', description: 'Company/brand name' },
+        segment:          { type: 'string', description: 'Business segment/industry' },
+        city:             { type: 'string', description: 'City where the business operates' },
+        what_you_sell:    { type: 'string', description: 'What the brand sells (products/services)' },
+        ticket_range:     { type: 'string', description: 'Typical price/ticket range' },
+        diferencial:      { type: 'string', description: 'Key differentiator versus competitors' },
+        main_products:    { type: 'array', items: { type: 'string' }, description: 'Main products/offers' },
+        target_audience:  { type: 'string', description: 'Target audience' },
+        audience_pains:   { type: 'array', items: { type: 'string' }, description: 'Audience pains/problems the brand solves' },
+        objections:       { type: 'array', items: { type: 'string' }, description: 'Common sales objections' },
+        tone:             { type: 'string', enum: ['professional', 'friendly', 'direct', 'premium'], description: 'Tone of voice' },
+        use_emojis:       { type: 'boolean', description: 'Whether to use emojis in generated content' },
+        preferred_words:  { type: 'array', items: { type: 'string' }, description: 'Preferred words/expressions' },
+        forbidden_words:  { type: 'array', items: { type: 'string' }, description: 'Words/expressions to avoid' },
+        primary_color:    { type: 'string', description: 'Primary brand color (hex #RRGGBB)' },
+        secondary_color:  { type: 'string', description: 'Secondary brand color (hex #RRGGBB)' },
+        neutral_color:    { type: 'string', description: 'Neutral brand color (hex #RRGGBB)' },
       },
     },
   },
@@ -54,7 +66,7 @@ export const tools = [
 
   {
     name: 'createCampaign',
-    description: 'Creates a new campaign and automatically generates posts via AI (1 credit per post). Requires a completed brand profile. Returns the created campaign.',
+    description: 'Creates a new campaign and automatically generates posts via AI (1 credit per post). Requires a completed brand profile. Post text is generated synchronously, but images are generated asynchronously in a background queue (status="generating") to respect provider rate limits - the response returns immediately without waiting for images. Poll getCampaign or listCampaignPosts to check progress (campaign.generation_progress / post.generation_status transitions pending -> generating -> ready or failed).',
     inputSchema: {
       type: 'object',
       required: ['name'],
@@ -146,7 +158,7 @@ export const tools = [
 
   {
     name: 'createPost',
-    description: 'Creates a standalone post draft. Use type="carousel" with image_descriptions[] (3-6 items) for a carousel post. Default type="text" uses image_description for a single image. Set skip_image_generation=true when you plan to upload your own image with uploadPostImage right after — prevents the AI from generating and overwriting your upload.',
+    description: 'Creates a standalone post draft. Use type="carousel" with image_descriptions[] (3-6 items) for a carousel post. Default type="text" uses image_description for a single image. Set skip_image_generation=true when you plan to upload your own image with uploadPostImage right after — prevents the AI from generating and overwriting your upload. When image generation runs, it is enqueued and processed asynchronously (post.generation_status: pending -> generating -> ready/failed) - the response returns before the image is ready; poll getPost to check.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -227,7 +239,7 @@ export const tools = [
 
   {
     name: 'regeneratePostImage',
-    description: 'Generates a new image for the post using AI. For carousel posts, regenerates all slides or a specific slide via slot_index. From the 6th generation onwards, an extra credit is charged - confirm with confirm_extra_content: true.',
+    description: 'Enqueues a new image generation for the post using AI (processed asynchronously in a background queue - the response returns immediately, before the image is ready; poll getPost and check post.generation_status). For carousel posts, regenerates all slides or a specific slide via slot_index. From the 6th generation onwards, an extra credit is charged - confirm with confirm_extra_content: true.',
     inputSchema: {
       type: 'object',
       required: ['id'],

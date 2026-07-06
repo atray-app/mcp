@@ -1,6 +1,6 @@
 {
   "name": "@atray/mcp",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "MCP server for ATRAY API - manage campaigns, posts and brand profile via AI",
   "type": "module",
   "bin": {
@@ -21,7 +21,15 @@
   "engines": {
     "node": ">=18"
   },
-  "keywords": ["mcp", "atray", "ai", "instagram", "content", "social-media", "automation"],
+  "keywords": [
+    "mcp",
+    "atray",
+    "ai",
+    "instagram",
+    "content",
+    "social-media",
+    "automation"
+  ],
   "license": "MIT",
   "author": {
     "name": "ATRAY",

@@ -482,4 +482,45 @@ export const tools = [
       },
     },
   },
+
+  {
+    name: 'listCrmConversations',
+    description: 'Lists WhatsApp inbox conversations ordered by last message. Includes contact info, unread count, agent state and last message preview.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', enum: ['open', 'waiting_human', 'resolved'] },
+        q:      { type: 'string', description: 'Search by contact name or phone' },
+        limit:  { type: 'integer', minimum: 1, maximum: 100 },
+        offset: { type: 'integer', minimum: 0 },
+      },
+    },
+  },
+
+  {
+    name: 'getCrmConversationMessages',
+    description: 'Gets messages of a conversation, newest first. Use before (ISO datetime) as cursor for older pages.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:     { type: 'string', description: 'Conversation UUID' },
+        before: { type: 'string', description: 'ISO datetime cursor' },
+        limit:  { type: 'integer', minimum: 1, maximum: 200 },
+      },
+    },
+  },
+
+  {
+    name: 'sendCrmMessage',
+    description: 'Sends a WhatsApp message in a conversation as a human attendant. Delivery goes through the outbox worker; the AI agent is PAUSED on this conversation (human takeover).',
+    inputSchema: {
+      type: 'object',
+      required: ['id', 'text'],
+      properties: {
+        id:   { type: 'string', description: 'Conversation UUID' },
+        text: { type: 'string', description: 'Message text' },
+      },
+    },
+  },
 ];

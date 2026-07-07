@@ -140,6 +140,17 @@ async function callTool(name, a) {
     case 'moveCrmDealStage':
       return api.put(`/crm/deals/${a.id}/stage`, { stage_id: a.stage_id });
 
+    case 'listCrmConversations':
+      return api.get('/crm/conversations', a);
+
+    case 'getCrmConversationMessages': {
+      const { id, ...q } = a;
+      return api.get(`/crm/conversations/${id}/messages`, q);
+    }
+
+    case 'sendCrmMessage':
+      return api.post(`/crm/conversations/${a.id}/messages`, { text: a.text });
+
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

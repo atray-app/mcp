@@ -165,6 +165,12 @@ async function callTool(name, a) {
       return api.put(`/crm/automations/${id}`, body);
     }
 
+    case 'listCrmSequences':
+      return api.get('/crm/sequences');
+
+    case 'enrollContactInSequence':
+      return api.post(`/crm/sequences/${a.sequence_id}/enroll`, { contact_id: a.contact_id });
+
     case 'listCrmAgents':
       return api.get('/crm/agents');
 

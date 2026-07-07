@@ -525,6 +525,25 @@ export const tools = [
   },
 
   {
+    name: 'listCrmSequences',
+    description: 'Lists follow-up sequences (multi-step cadences with waits; stop-on-reply) with step and enrollment counts.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+
+  {
+    name: 'enrollContactInSequence',
+    description: 'Enrolls a contact in a follow-up sequence (step 1 scheduled by its wait). One active enrollment per contact per sequence; contacts with opt-out are refused.',
+    inputSchema: {
+      type: 'object',
+      required: ['sequence_id', 'contact_id'],
+      properties: {
+        sequence_id: { type: 'string', description: 'Sequence UUID' },
+        contact_id:  { type: 'string', description: 'Contact UUID' },
+      },
+    },
+  },
+
+  {
     name: 'listCrmAgents',
     description: 'Lists the AI agents (name, prompt, WhatsApp connection, active state, settings). Only 1 active agent per connection.',
     inputSchema: { type: 'object', properties: {} },

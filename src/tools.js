@@ -523,4 +523,36 @@ export const tools = [
       },
     },
   },
+
+  {
+    name: 'listCrmAgents',
+    description: 'Lists the AI agents (name, prompt, WhatsApp connection, active state, settings). Only 1 active agent per connection.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+
+  {
+    name: 'updateCrmAgent',
+    description: 'Updates an AI agent. Only send the fields to change. To activate, the agent needs a prompt and a WhatsApp connection; activating deactivates other agents on the same connection.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:                   { type: 'string', description: 'Agent UUID' },
+        name:                 { type: 'string' },
+        prompt:               { type: 'string', description: 'Behavior prompt (role, tone, what it can/cannot do)' },
+        social_connection_id: { type: 'string', description: 'WhatsApp connection UUID' },
+        is_active:            { type: 'boolean' },
+        settings: {
+          type: 'object',
+          properties: {
+            debounce_seconds:        { type: 'integer', minimum: 3, maximum: 120 },
+            max_consecutive_replies: { type: 'integer', minimum: 1, maximum: 20 },
+            business_hours:          { type: 'object', description: '{start:"08:00", end:"18:00", tz:"America/Sao_Paulo"} or null' },
+            fallback_message:        { type: 'string' },
+            escalation_jid:          { type: 'string', description: 'Phone/group that receives escalation alerts' },
+          },
+        },
+      },
+    },
+  },
 ];

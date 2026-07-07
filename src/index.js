@@ -151,6 +151,14 @@ async function callTool(name, a) {
     case 'sendCrmMessage':
       return api.post(`/crm/conversations/${a.id}/messages`, { text: a.text });
 
+    case 'listCrmAgents':
+      return api.get('/crm/agents');
+
+    case 'updateCrmAgent': {
+      const { id, ...body } = a;
+      return api.put(`/crm/agents/${id}`, body);
+    }
+
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

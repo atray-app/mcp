@@ -42,6 +42,7 @@ export const tools = [
         primary_color:    { type: 'string', description: 'Primary brand color (hex #RRGGBB)' },
         secondary_color:  { type: 'string', description: 'Secondary brand color (hex #RRGGBB)' },
         neutral_color:    { type: 'string', description: 'Neutral brand color (hex #RRGGBB)' },
+        company_context:  { type: 'string', description: 'Free-form long-text company context (products, policies, FAQ, rules) used by AI agents and content generation' },
       },
     },
   },
@@ -303,6 +304,181 @@ export const tools = [
         id:                   { type: 'string', description: 'Post UUID' },
         scheduled_at:         { type: 'string', description: 'Publish datetime (ISO-8601). Omit to publish as soon as possible.' },
         social_connection_id: { type: 'string', description: 'Target account UUID (from listSocialConnections). Required for standalone posts.' },
+      },
+    },
+  },
+
+  // ─── CRM ────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'listCrmContacts',
+    description: 'Lists CRM contacts with filters and pagination. Returns contacts array and total.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        q:       { type: 'string', description: 'Search by name, email, company or phone' },
+        list_id: { type: 'string', description: 'Filter by contact list UUID' },
+        tag:     { type: 'string', description: 'Filter by tag' },
+        sort:    { type: 'string', enum: ['full_name', 'created_at', 'last_interaction_at', 'company', 'city'] },
+        order:   { type: 'string', enum: ['asc', 'desc'] },
+        limit:   { type: 'integer', minimum: 1, maximum: 100 },
+        offset:  { type: 'integer', minimum: 0 },
+      },
+    },
+  },
+
+  {
+    name: 'getCrmContact',
+    description: 'Gets a CRM contact by UUID, including the lists it belongs to.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: { id: { type: 'string', description: 'Contact UUID' } },
+    },
+  },
+
+  {
+    name: 'createCrmContact',
+    description: 'Creates a CRM contact. Provide at least name, phone or email. Phone in any format is normalized to E.164 (BR numbers without country code get 55). Returns 409 DUPLICATE_PHONE with existing_id if the phone already exists.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        full_name:     { type: 'string' },
+        phone:         { type: 'string', description: 'Phone in any format' },
+        email:         { type: 'string' },
+        company:       { type: 'string' },
+        city:          { type: 'string' },
+        birthday:      { type: 'string', description: 'YYYY-MM-DD' },
+        tags:          { type: 'array', items: { type: 'string' } },
+        custom_fields: { type: 'object' },
+        notes:         { type: 'string' },
+      },
+    },
+  },
+
+  {
+    name: 'updateCrmContact',
+    description: 'Updates a CRM contact. Only send the fields you want to change. opt_out: true excludes the contact from automations.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:            { type: 'string', description: 'Contact UUID' },
+        full_name:     { type: 'string' },
+        phone:         { type: 'string' },
+        email:         { type: 'string' },
+        company:       { type: 'string' },
+        city:          { type: 'string' },
+        birthday:      { type: 'string', description: 'YYYY-MM-DD' },
+        tags:          { type: 'array', items: { type: 'string' } },
+        custom_fields: { type: 'object' },
+        notes:         { type: 'string' },
+        opt_out:       { type: 'boolean' },
+      },
+    },
+  },
+
+  {
+    name: 'importCrmContacts',
+    description: 'Imports contacts from CSV text (first row = header; accepted columns: nome/name, telefone/phone/whatsapp, email, empresa/company, cidade/city, aniversario/birthday, observacoes/notes, tags). Deduplicates by phone. Max 5000 rows. Returns { created, skipped_duplicates, errors }.',
+    inputSchema: {
+      type: 'object',
+      required: ['csv'],
+      properties: {
+        csv:     { type: 'string', description: 'Raw CSV text' },
+        list_id: { type: 'string', description: 'Optional list UUID to add imported contacts to' },
+      },
+    },
+  },
+
+  {
+    name: 'listCrmLists',
+    description: 'Lists CRM contact lists (segments) with member counts.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+
+  {
+    name: 'listCrmPipelines',
+    description: 'Lists CRM pipelines, each with its ordered custom stages (id, name, color, is_won, is_lost).',
+    inputSchema: { type: 'object', properties: {} },
+  },
+
+  {
+    name: 'getCrmPipelineBoard',
+    description: 'Returns the kanban board of a pipeline: columns (stages) with their deals, counts and total values in cents.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: { id: { type: 'string', description: 'Pipeline UUID' } },
+    },
+  },
+
+  {
+    name: 'listCrmDeals',
+    description: 'Lists CRM deals with filters and pagination. Returns deals (with stage_name, pipeline_name, contact_name) and total.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pipeline_id: { type: 'string' },
+        stage_id:    { type: 'string' },
+        contact_id:  { type: 'string' },
+        q:           { type: 'string', description: 'Search by title' },
+        sort:        { type: 'string', enum: ['title', 'value_cents', 'created_at', 'updated_at', 'expected_close_date'] },
+        order:       { type: 'string', enum: ['asc', 'desc'] },
+        limit:       { type: 'integer', minimum: 1, maximum: 100 },
+        offset:      { type: 'integer', minimum: 0 },
+      },
+    },
+  },
+
+  {
+    name: 'createCrmDeal',
+    description: 'Creates a CRM deal. title is required. Without pipeline_id uses the default pipeline; without stage_id uses its first stage. value_cents is the monetary value in cents (BRL default).',
+    inputSchema: {
+      type: 'object',
+      required: ['title'],
+      properties: {
+        title:               { type: 'string' },
+        pipeline_id:         { type: 'string' },
+        stage_id:            { type: 'string' },
+        contact_id:          { type: 'string' },
+        value_cents:         { type: 'integer' },
+        currency:            { type: 'string', description: 'ISO 4217, default BRL' },
+        owner_name:          { type: 'string' },
+        expected_close_date: { type: 'string', description: 'YYYY-MM-DD' },
+        notes:               { type: 'string' },
+      },
+    },
+  },
+
+  {
+    name: 'updateCrmDeal',
+    description: 'Updates a CRM deal. Only send the fields you want to change (to move stage use moveCrmDealStage).',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:                  { type: 'string', description: 'Deal UUID' },
+        title:               { type: 'string' },
+        contact_id:          { type: 'string' },
+        value_cents:         { type: 'integer' },
+        currency:            { type: 'string' },
+        owner_name:          { type: 'string' },
+        expected_close_date: { type: 'string', description: 'YYYY-MM-DD' },
+        notes:               { type: 'string' },
+      },
+    },
+  },
+
+  {
+    name: 'moveCrmDealStage',
+    description: 'Moves a deal to another stage of its pipeline (kanban). Records stage_entered_at; entering a won/lost stage sets closed_at.',
+    inputSchema: {
+      type: 'object',
+      required: ['id', 'stage_id'],
+      properties: {
+        id:       { type: 'string', description: 'Deal UUID' },
+        stage_id: { type: 'string', description: 'Target stage UUID (same pipeline)' },
       },
     },
   },

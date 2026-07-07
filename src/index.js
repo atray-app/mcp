@@ -99,6 +99,47 @@ async function callTool(name, a) {
       return api.post(`/posts/${id}/schedule`, body);
     }
 
+    // ─── CRM ──────────────────────────────────────────────────────────────────
+    case 'listCrmContacts':
+      return api.get('/crm/contacts', a);
+
+    case 'getCrmContact':
+      return api.get(`/crm/contacts/${a.id}`);
+
+    case 'createCrmContact':
+      return api.post('/crm/contacts', a);
+
+    case 'updateCrmContact': {
+      const { id, ...body } = a;
+      return api.put(`/crm/contacts/${id}`, body);
+    }
+
+    case 'importCrmContacts':
+      return api.post('/crm/contacts/import', a);
+
+    case 'listCrmLists':
+      return api.get('/crm/lists');
+
+    case 'listCrmPipelines':
+      return api.get('/crm/pipelines');
+
+    case 'getCrmPipelineBoard':
+      return api.get(`/crm/pipelines/${a.id}/board`);
+
+    case 'listCrmDeals':
+      return api.get('/crm/deals', a);
+
+    case 'createCrmDeal':
+      return api.post('/crm/deals', a);
+
+    case 'updateCrmDeal': {
+      const { id, ...body } = a;
+      return api.put(`/crm/deals/${id}`, body);
+    }
+
+    case 'moveCrmDealStage':
+      return api.put(`/crm/deals/${a.id}/stage`, { stage_id: a.stage_id });
+
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

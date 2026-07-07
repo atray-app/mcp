@@ -531,6 +531,49 @@ export const tools = [
   },
 
   {
+    name: 'listCrmAutomations',
+    description: 'Lists CRM automations (trigger, actions, active state, completed runs count).',
+    inputSchema: { type: 'object', properties: {} },
+  },
+
+  {
+    name: 'createCrmAutomation',
+    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, message_keyword {keywords[]}, message_first_contact {}, deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
+    inputSchema: {
+      type: 'object',
+      required: ['name', 'trigger_type', 'actions'],
+      properties: {
+        name:           { type: 'string' },
+        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
+        trigger_config: { type: 'object', description: 'Per trigger type (see description)' },
+        conditions:     { type: 'object', properties: { list_id: { type: 'string' } } },
+        actions:        { type: 'array', items: { type: 'object' }, description: 'See description for action shapes' },
+        cooldown_hours: { type: 'integer' },
+        is_active:      { type: 'boolean' },
+      },
+    },
+  },
+
+  {
+    name: 'updateCrmAutomation',
+    description: 'Updates a CRM automation (same shapes as createCrmAutomation; send only fields to change; is_active toggles it).',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:             { type: 'string', description: 'Automation UUID' },
+        name:           { type: 'string' },
+        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
+        trigger_config: { type: 'object' },
+        conditions:     { type: 'object' },
+        actions:        { type: 'array', items: { type: 'object' } },
+        cooldown_hours: { type: 'integer' },
+        is_active:      { type: 'boolean' },
+      },
+    },
+  },
+
+  {
     name: 'updateCrmAgent',
     description: 'Updates an AI agent. Only send the fields to change. To activate, the agent needs a prompt and a WhatsApp connection; activating deactivates other agents on the same connection.',
     inputSchema: {

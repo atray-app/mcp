@@ -151,6 +151,17 @@ async function callTool(name, a) {
     case 'sendCrmMessage':
       return api.post(`/crm/conversations/${a.id}/messages`, { text: a.text });
 
+    case 'listCrmAutomations':
+      return api.get('/crm/automations');
+
+    case 'createCrmAutomation':
+      return api.post('/crm/automations', a);
+
+    case 'updateCrmAutomation': {
+      const { id, ...body } = a;
+      return api.put(`/crm/automations/${id}`, body);
+    }
+
     case 'listCrmAgents':
       return api.get('/crm/agents');
 

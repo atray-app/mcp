@@ -531,6 +531,18 @@ export const tools = [
   },
 
   {
+    name: 'getCrmDashboardOverview',
+    description: 'CRM overview: new contacts, open/waiting conversations, open deals value, won/lost deals in the period, messages per day, AI agent replies/escalations and the pipeline funnel.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        days:        { type: 'integer', minimum: 7, maximum: 90, description: 'Period in days (default 30)' },
+        pipeline_id: { type: 'string', description: 'Funnel pipeline UUID (default: default pipeline)' },
+      },
+    },
+  },
+
+  {
     name: 'listCrmAutomations',
     description: 'Lists CRM automations (trigger, actions, active state, completed runs count).',
     inputSchema: { type: 'object', properties: {} },

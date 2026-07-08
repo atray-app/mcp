@@ -67,7 +67,7 @@ export const tools = [
 
   {
     name: 'createCampaign',
-    description: 'Creates a new campaign and automatically generates posts via AI (1 credit per post). Requires a completed brand profile. Post text is generated synchronously, but images are generated asynchronously in a background queue (status="generating") to respect provider rate limits - the response returns immediately without waiting for images. Poll getCampaign or listCampaignPosts to check progress (campaign.generation_progress / post.generation_status transitions pending -> generating -> ready or failed).',
+    description: 'Creates a new campaign and automatically generates posts via AI (1 post from the quota per generated post). Requires a completed brand profile. Post text is generated synchronously, but images are generated asynchronously in a background queue (status="generating") to respect provider rate limits - the response returns immediately without waiting for images. Poll getCampaign or listCampaignPosts to check progress (campaign.generation_progress / post.generation_status transitions pending -> generating -> ready or failed).',
     inputSchema: {
       type: 'object',
       required: ['name'],
@@ -159,7 +159,7 @@ export const tools = [
 
   {
     name: 'createPost',
-    description: 'Creates a standalone post draft. Use type="carousel" with image_descriptions[] (3-6 items) for a carousel post. Default type="text" uses image_description for a single image. Set skip_image_generation=true when you plan to upload your own image with uploadPostImage right after — prevents the AI from generating and overwriting your upload. When image generation runs, it is enqueued and processed asynchronously (post.generation_status: pending -> generating -> ready/failed) - the response returns before the image is ready; poll getPost to check.',
+    description: 'Creates a standalone post draft. Billing: creating with AI (context or campaign present) uses 1 post from the quota; a fully manual draft (own caption/media, no context) is free at creation and only pays when AI generation is first used. Publishing consumes publishes (1 per destination account). Use type="carousel" with image_descriptions[] (3-6 items) for a carousel post. Default type="text" uses image_description for a single image. Set skip_image_generation=true when you plan to upload your own image with uploadPostImage right after — prevents the AI from generating and overwriting your upload. When image generation runs, it is enqueued and processed asynchronously (post.generation_status: pending -> generating -> ready/failed) - the response returns before the image is ready; poll getPost to check.',
     inputSchema: {
       type: 'object',
       properties: {

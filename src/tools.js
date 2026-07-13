@@ -452,6 +452,16 @@ export const tools = [
   },
 
   {
+    name: 'getCrmDeal',
+    description: 'Gets a single CRM deal by UUID.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: { id: { type: 'string', description: 'Deal UUID' } },
+    },
+  },
+
+  {
     name: 'updateCrmDeal',
     description: 'Updates a CRM deal. Only send the fields you want to change (to move stage use moveCrmDealStage).',
     inputSchema: {
@@ -628,5 +638,13 @@ export const tools = [
         },
       },
     },
+  },
+
+  // ─── BILLING ────────────────────────────────────────────────────────────────
+
+  {
+    name: 'getBillingUsage',
+    description: "Current-month usage per module: posts (AI generations), publicacoes (1 post x 1 destination account) and atendimentos (AI conversations handled by the CRM agent). Each module reports the plan quota (used/total), the extra one-time pack balance (with expiry) and the total available now. Use to check remaining atendimentos/posts/publish quota before creating content or enrolling contacts.",
+    inputSchema: { type: 'object', properties: {} },
   },
 ];

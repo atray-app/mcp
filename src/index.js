@@ -10,7 +10,7 @@ import { tools } from './tools.js';
 import { api } from './api.js';
 
 const server = new Server(
-  { name: 'atray-mcp', version: '1.0.8' },
+  { name: 'atray-mcp', version: '1.1.0' },
   { capabilities: { tools: {} } }
 );
 
@@ -132,6 +132,9 @@ async function callTool(name, a) {
     case 'createCrmDeal':
       return api.post('/crm/deals', a);
 
+    case 'getCrmDeal':
+      return api.get(`/crm/deals/${a.id}`);
+
     case 'updateCrmDeal': {
       const { id, ...body } = a;
       return api.put(`/crm/deals/${id}`, body);
@@ -178,6 +181,10 @@ async function callTool(name, a) {
       const { id, ...body } = a;
       return api.put(`/crm/agents/${id}`, body);
     }
+
+    // ─── BILLING ────────────────────────────────────────────────────────────
+    case 'getBillingUsage':
+      return api.get('/billing/usage');
 
     default:
       throw new Error(`Unknown tool: ${name}`);

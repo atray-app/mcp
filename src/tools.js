@@ -78,7 +78,13 @@ export const tools = [
         context_text: { type: 'string', description: 'Context or brief for AI content generation (min 20 chars)' },
         start_date:   { type: 'string', description: 'Start date (YYYY-MM-DD)' },
         end_date:     { type: 'string', description: 'End date (YYYY-MM-DD)' },
-        frequency:    { type: 'integer', description: 'Posts per week' },
+        frequency:    {
+          oneOf: [
+            { type: 'string', enum: ['1_post_dia', '2_posts_dia'] },
+            { type: 'integer', minimum: 1, maximum: 7 },
+          ],
+          description: "Post cadence: '1_post_dia' (1/day), '2_posts_dia' (2/day), or an integer 1-7 meaning posts per week (spread evenly across each 7-day block from start_date)",
+        },
         post_time:    { type: 'string', description: 'Preferred publish time (HH:MM)' },
         cta_text:     { type: 'string', description: 'Call-to-action text' },
         cta_link:     { type: 'string', description: 'Call-to-action URL' },
@@ -114,7 +120,13 @@ export const tools = [
         context_text: { type: 'string', description: 'Min 20 chars' },
         start_date:   { type: 'string', description: 'YYYY-MM-DD' },
         end_date:     { type: 'string', description: 'YYYY-MM-DD' },
-        frequency:    { type: 'integer' },
+        frequency:    {
+          oneOf: [
+            { type: 'string', enum: ['1_post_dia', '2_posts_dia'] },
+            { type: 'integer', minimum: 1, maximum: 7 },
+          ],
+          description: "Post cadence: '1_post_dia' (1/day), '2_posts_dia' (2/day), or an integer 1-7 meaning posts per week",
+        },
         post_time:    { type: 'string', description: 'HH:MM' },
         cta_text:     { type: 'string' },
         cta_link:     { type: 'string' },

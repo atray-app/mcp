@@ -410,6 +410,12 @@ export const tools = [
   },
 
   {
+    name: 'listCrmLabels',
+    description: 'Lists CRM labels (etiquetas: unified tags + lists) with contact counts and the available color palette.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+
+  {
     name: 'listCrmPipelines',
     description: 'Lists CRM pipelines, each with its ordered custom stages (id, name, color, is_won, is_lost).',
     inputSchema: { type: 'object', properties: {} },

@@ -120,6 +120,9 @@ async function callTool(name, a) {
     case 'listCrmLists':
       return api.get('/crm/lists');
 
+    case 'listCrmLabels':
+      return api.get('/crm/labels');
+
     case 'listCrmPipelines':
       return api.get('/crm/pipelines');
 

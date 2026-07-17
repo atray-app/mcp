@@ -177,6 +177,9 @@ async function callTool(name, a) {
     case 'listCrmAgents':
       return api.get('/crm/agents');
 
+    case 'createCrmAgent':
+      return api.post('/crm/agents', a);
+
     case 'updateCrmAgent': {
       const { id, ...body } = a;
       return api.put(`/crm/agents/${id}`, body);

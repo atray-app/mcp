@@ -67,7 +67,7 @@ Restart the client and the ATRAY tools become available.
 | `listCrmDeals` / `createCrmDeal` / `getCrmDeal` / `updateCrmDeal` / `moveCrmDealStage` | Manage deals and move them across pipeline stages. |
 | `listCrmConversations` / `getCrmConversationMessages` | Read the WhatsApp inbox (conversations and message history). |
 | `sendCrmMessage` | Send a WhatsApp message as a human attendant (pauses the AI agent on that conversation - human takeover). |
-| `listCrmAgents` / `updateCrmAgent` | View and configure the AI agents that answer WhatsApp conversations. |
+| `listCrmAgents` / `createCrmAgent` / `updateCrmAgent` | Create, view and configure the AI agents that answer WhatsApp conversations. |
 | `listCrmAutomations` / `createCrmAutomation` / `updateCrmAutomation` | Manage CRM automations (birthday, inactivity, follow-up, keyword and deal-stage triggers). |
 | `listCrmSequences` / `enrollContactInSequence` | Manage follow-up sequences and enroll contacts. |
 | `getCrmDashboardOverview` | CRM KPIs: contacts, conversations, deal funnel, AI agent replies/escalations. |

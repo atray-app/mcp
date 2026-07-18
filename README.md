@@ -13,7 +13,7 @@ campaigns, posts, and brand profile in natural language.
 
 - Node.js >= 18
 - An ATRAY account and an **API key**. Generate one in the Studio under
-  **Settings → API keys** (`https://studio.atray.app`). The key (`atray_...`) is shown only
+  **Settings → Tools** (`https://studio.atray.app`). The key (`atray_...`) is shown only
   once on creation, so store it safely.
 
 ## Quick start
@@ -77,7 +77,7 @@ Each AI-generated post consumes 1 content credit from your plan. Creating a camp
 requires a completed brand profile. `sendCrmMessage` is the only tool that reaches a real
 customer directly - review the text before calling it, since it is not reversible.
 
-> API keys are created and managed in the Studio (**Settings → API keys**), not through
+> API keys are created and managed in the Studio (**Settings → Tools**), not through
 > the API/MCP.
 
 ## API reference

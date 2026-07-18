@@ -627,14 +627,15 @@ export const tools = [
 
   {
     name: 'createCrmAgent',
-    description: 'Creates an AI agent. Only "name" is required. To create it already active (is_active), the agent needs a prompt and a WhatsApp connection; activating deactivates other agents on the same connection.',
+    description: 'Creates an AI agent. Only "name" is required. To create it already active (is_active), the agent needs a prompt and at least one connection; activating deactivates other agents that share any of its connections.',
     inputSchema: {
       type: 'object',
       required: ['name'],
       properties: {
         name:                 { type: 'string' },
         prompt:               { type: 'string', description: 'Behavior prompt (role, tone, what it can/cannot do)' },
-        social_connection_id: { type: 'string', description: 'WhatsApp connection UUID' },
+        connection_ids:       { type: 'array', items: { type: 'string' }, description: 'WhatsApp/Instagram connection UUIDs the agent answers on (replaces all links)' },
+        social_connection_id: { type: 'string', description: 'Legacy: single connection UUID. Prefer connection_ids.' },
         is_active:            { type: 'boolean' },
         settings: {
           type: 'object',
@@ -654,7 +655,7 @@ export const tools = [
 
   {
     name: 'updateCrmAgent',
-    description: 'Updates an AI agent. Only send the fields to change. To activate, the agent needs a prompt and a WhatsApp connection; activating deactivates other agents on the same connection.',
+    description: 'Updates an AI agent. Only send the fields to change. To activate, the agent needs a prompt and at least one connection; activating deactivates other agents that share any of its connections.',
     inputSchema: {
       type: 'object',
       required: ['id'],
@@ -662,7 +663,8 @@ export const tools = [
         id:                   { type: 'string', description: 'Agent UUID' },
         name:                 { type: 'string' },
         prompt:               { type: 'string', description: 'Behavior prompt (role, tone, what it can/cannot do)' },
-        social_connection_id: { type: 'string', description: 'WhatsApp connection UUID' },
+        connection_ids:       { type: 'array', items: { type: 'string' }, description: 'WhatsApp/Instagram connection UUIDs the agent answers on (replaces ALL links - send the full list, not just the new one)' },
+        social_connection_id: { type: 'string', description: 'Legacy: single connection UUID. Prefer connection_ids.' },
         is_active:            { type: 'boolean' },
         settings: {
           type: 'object',

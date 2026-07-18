@@ -333,11 +333,12 @@ export const tools = [
 
   {
     name: 'listCrmContacts',
-    description: 'Lists CRM contacts with filters and pagination. Returns contacts array and total.',
+    description: 'Lists CRM contacts with filters and pagination. Returns contacts array and total. Single contact base: leads and customers are the same records, segmented by the stage filter.',
     inputSchema: {
       type: 'object',
       properties: {
         q:        { type: 'string', description: 'Search by name, email, company or phone' },
+        stage:    { type: 'string', enum: ['lead', 'customer'], description: 'Segment: lead or customer. Omit for all contacts' },
         label_id: { type: 'string', description: 'Filter by label UUID' },
         tag:      { type: 'string', description: 'Filter by tag' },
         sort:    { type: 'string', enum: ['full_name', 'created_at', 'last_interaction_at', 'company', 'city'] },
@@ -373,13 +374,14 @@ export const tools = [
         tags:          { type: 'array', items: { type: 'string' } },
         custom_fields: { type: 'object' },
         notes:         { type: 'string' },
+        stage:         { type: 'string', enum: ['lead', 'customer'], description: 'Life stage. Defaults to lead' },
       },
     },
   },
 
   {
     name: 'updateCrmContact',
-    description: 'Updates a CRM contact. Only send the fields you want to change. opt_out: true excludes the contact from automations.',
+    description: 'Updates a CRM contact. Only send the fields you want to change. opt_out: true excludes the contact from automations. stage moves the contact between lead and customer (winning a deal promotes to customer automatically).',
     inputSchema: {
       type: 'object',
       required: ['id'],
@@ -394,6 +396,7 @@ export const tools = [
         tags:          { type: 'array', items: { type: 'string' } },
         custom_fields: { type: 'object' },
         notes:         { type: 'string' },
+        stage:         { type: 'string', enum: ['lead', 'customer'] },
         opt_out:       { type: 'boolean' },
       },
     },

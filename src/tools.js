@@ -107,7 +107,7 @@ export const tools = [
 
   {
     name: 'updateCampaign',
-    description: 'Updates a campaign. Only send the fields you want to change.',
+    description: 'Updates a campaign. Only send the fields you want to change. Use social_connection_ids to change which accounts the campaign publishes to (this is what future posts of the campaign will use).',
     inputSchema: {
       type: 'object',
       required: ['id'],
@@ -130,6 +130,11 @@ export const tools = [
         post_time:    { type: 'string', description: 'HH:MM' },
         cta_text:     { type: 'string' },
         cta_link:     { type: 'string' },
+        social_connection_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Target account UUIDs (from listSocialConnections) the campaign publishes to. Replaces the whole list. Accounts must be yours and active; an empty array unlinks all accounts.',
+        },
       },
     },
   },
@@ -217,7 +222,7 @@ export const tools = [
 
   {
     name: 'updatePost',
-    description: 'Updates a post. Only send the fields you want to change. Supports updating caption, CTA, hashtags, image description, context and image generation settings.',
+    description: 'Updates a post. Only send the fields you want to change. Supports updating caption, CTA, hashtags, image description, context, image generation settings and, for standalone posts, the target account (social_connection_id).',
     inputSchema: {
       type: 'object',
       required: ['id'],
@@ -234,6 +239,10 @@ export const tools = [
         scheduled_at:       { type: 'string', description: 'Publish datetime (ISO-8601, must be in the future)' },
         image_text_enabled: { type: 'boolean' },
         image_logo_enabled: { type: 'boolean' },
+        social_connection_id: {
+          type: 'string',
+          description: 'Target account UUID (from listSocialConnections) for a STANDALONE post. Once set, schedulePost no longer needs it. Rejected for campaign posts: those publish to the campaign accounts (change them via updateCampaign social_connection_ids). Pass null to clear.',
+        },
       },
     },
   },

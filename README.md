@@ -54,9 +54,9 @@ Restart the client and the ATRAY tools become available.
 | Tool | What it does |
 |---|---|
 | `getBrandProfile` / `updateBrandProfile` | View and update the brand profile. |
-| `listCampaigns` / `createCampaign` / `getCampaign` / `updateCampaign` | Manage campaigns. `createCampaign` generates posts with AI (1 content credit per post). |
+| `listCampaigns` / `createCampaign` / `getCampaign` / `updateCampaign` | Manage campaigns. `createCampaign` generates posts with AI (1 content credit per post). `updateCampaign` takes `social_connection_ids` (array) to change the accounts the campaign publishes to - it replaces the whole list, so send all of them. |
 | `listCampaignPosts` | List posts of a campaign. |
-| `listPosts` / `createPost` / `getPost` / `updatePost` | Manage posts (text and carousel). |
+| `listPosts` / `createPost` / `getPost` / `updatePost` | Manage posts (text and carousel). On a standalone post, `updatePost` accepts `social_connection_id` to set the publish target up front, so `schedulePost` no longer needs it. Campaign posts reject it - their target comes from the campaign. |
 | `regeneratePostText` / `regeneratePostImage` | Regenerate caption or image with AI. |
 | `uploadPostVideo` | Upload a video (mp4/mov/webm, up to 120 MB) as the post media; published to Instagram as a Reel. |
 | `listSocialConnections` | List your connected social accounts (read-only) to pick a publish target. |

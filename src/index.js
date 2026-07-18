@@ -117,9 +117,6 @@ async function callTool(name, a) {
     case 'importCrmContacts':
       return api.post('/crm/contacts/import', a);
 
-    case 'listCrmLists':
-      return api.get('/crm/lists');
-
     case 'listCrmLabels':
       return api.get('/crm/labels');
 

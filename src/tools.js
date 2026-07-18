@@ -328,9 +328,9 @@ export const tools = [
     inputSchema: {
       type: 'object',
       properties: {
-        q:       { type: 'string', description: 'Search by name, email, company or phone' },
-        list_id: { type: 'string', description: 'Filter by contact list UUID' },
-        tag:     { type: 'string', description: 'Filter by tag' },
+        q:        { type: 'string', description: 'Search by name, email, company or phone' },
+        label_id: { type: 'string', description: 'Filter by label UUID' },
+        tag:      { type: 'string', description: 'Filter by tag' },
         sort:    { type: 'string', enum: ['full_name', 'created_at', 'last_interaction_at', 'company', 'city'] },
         order:   { type: 'string', enum: ['asc', 'desc'] },
         limit:   { type: 'integer', minimum: 1, maximum: 100 },
@@ -341,7 +341,7 @@ export const tools = [
 
   {
     name: 'getCrmContact',
-    description: 'Gets a CRM contact by UUID, including the lists it belongs to.',
+    description: 'Gets a CRM contact by UUID, including its labels.',
     inputSchema: {
       type: 'object',
       required: ['id'],
@@ -397,16 +397,9 @@ export const tools = [
       type: 'object',
       required: ['csv'],
       properties: {
-        csv:     { type: 'string', description: 'Raw CSV text' },
-        list_id: { type: 'string', description: 'Optional list UUID to add imported contacts to' },
+        csv: { type: 'string', description: 'Raw CSV text' },
       },
     },
-  },
-
-  {
-    name: 'listCrmLists',
-    description: 'Lists CRM contact lists (segments) with member counts.',
-    inputSchema: { type: 'object', properties: {} },
   },
 
   {
@@ -605,7 +598,7 @@ export const tools = [
         name:           { type: 'string' },
         trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
         trigger_config: { type: 'object', description: 'Per trigger type (see description)' },
-        conditions:     { type: 'object', properties: { list_id: { type: 'string' } } },
+        conditions:     { type: 'object', properties: { label_id: { type: 'string', description: 'Only run for contacts with this label' } } },
         actions:        { type: 'array', items: { type: 'object' }, description: 'See description for action shapes' },
         cooldown_hours: { type: 'integer' },
         is_active:      { type: 'boolean' },

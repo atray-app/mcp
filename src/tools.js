@@ -67,7 +67,7 @@ export const tools = [
 
   {
     name: 'createCampaign',
-    description: 'Creates a new campaign and automatically generates posts via AI (1 post from the quota per generated post). Requires a completed brand profile. Post text is generated synchronously, but images are generated asynchronously in a background queue (status="generating") to respect provider rate limits - the response returns immediately without waiting for images. Poll getCampaign or listCampaignPosts to check progress (campaign.generation_progress / post.generation_status transitions pending -> generating -> ready or failed).',
+    description: 'Creates a new campaign and automatically generates posts via AI (1 post from the quota per generated post). Requires a completed brand profile. Set generate_posts=false to create an empty campaign with no AI and no quota usage (brand profile and context_text are then not required) - add posts yourself afterwards with createPost. Post text is generated synchronously, but images are generated asynchronously in a background queue (status="generating") to respect provider rate limits - the response returns immediately without waiting for images. Poll getCampaign or listCampaignPosts to check progress (campaign.generation_progress / post.generation_status transitions pending -> generating -> ready or failed).',
     inputSchema: {
       type: 'object',
       required: ['name'],
@@ -75,7 +75,8 @@ export const tools = [
         name:         { type: 'string', maxLength: 255, description: 'Campaign name (required)' },
         objective:    { type: 'string', enum: ['awareness', 'engagement', 'sales', 'traffic', 'leads'], description: 'Campaign objective' },
         theme:        { type: 'string', description: 'Central theme or subject of the campaign' },
-        context_text: { type: 'string', description: 'Context or brief for AI content generation (min 20 chars)' },
+        context_text: { type: 'string', description: 'Context or brief for AI content generation (min 150 chars; optional and unconstrained when generate_posts=false)' },
+        generate_posts: { type: 'boolean', default: true, description: 'When false, creates the campaign empty: no AI generation, no quota usage, no brand profile required. Defaults to true.' },
         start_date:   { type: 'string', description: 'Start date (YYYY-MM-DD)' },
         end_date:     { type: 'string', description: 'End date (YYYY-MM-DD)' },
         frequency:    {
@@ -192,6 +193,7 @@ export const tools = [
         image_text_enabled:     { type: 'boolean', description: 'Include text overlay in generated image (default: true)' },
         image_logo_enabled:     { type: 'boolean', description: 'Include brand logo in generated image (default: true)' },
         skip_image_generation:  { type: 'boolean', description: 'Set to true to skip AI image generation. Use when you will upload your own image with uploadPostImage after creating the post.' },
+        generate_content:       { type: 'boolean', default: true, description: 'Set to false for a fully manual post: no AI at all (text and image) and no quota usage, even when campaign_id is set. Use to add hand-written posts to a campaign. Defaults to true.' },
       },
     },
   },

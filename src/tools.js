@@ -582,7 +582,7 @@ export const tools = [
 
   {
     name: 'listCrmAgents',
-    description: 'Lists the AI agents (name, prompt, WhatsApp connection, active state, settings). Only 1 active agent per connection.',
+    description: 'Lists the AI agents (name, prompt, WhatsApp/Instagram connections, active state, settings). Only 1 active agent per connection.',
     inputSchema: { type: 'object', properties: {} },
   },
 
@@ -606,13 +606,13 @@ export const tools = [
 
   {
     name: 'createCrmAutomation',
-    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, conversation_unanswered {minutes} (conversation with no reply for X minutes), message_keyword {keywords[]}, message_first_contact {}, deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
+    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, conversation_unanswered {minutes} (conversation with no reply for X minutes), message_keyword {keywords[]}, message_first_contact {}, comment_keyword {keywords[]} (Instagram comment on a post/reel containing any of the keywords), deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}, start_sequence {sequence_id}, reply_comment {template_text} (public reply to the comment), send_dm {template_text} (private reply Direct to the commenter - Meta allows 1 per comment, within 7 days). reply_comment/send_dm only make sense with the comment_keyword trigger. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
     inputSchema: {
       type: 'object',
       required: ['name', 'trigger_type', 'actions'],
       properties: {
         name:           { type: 'string' },
-        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'conversation_unanswered', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
+        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'conversation_unanswered', 'message_keyword', 'message_first_contact', 'comment_keyword', 'deal_stage_changed'] },
         trigger_config: { type: 'object', description: 'Per trigger type (see description)' },
         conditions:     { type: 'object', properties: { label_id: { type: 'string', description: 'Only run for contacts with this label' } } },
         actions:        { type: 'array', items: { type: 'object' }, description: 'See description for action shapes' },
@@ -631,7 +631,7 @@ export const tools = [
       properties: {
         id:             { type: 'string', description: 'Automation UUID' },
         name:           { type: 'string' },
-        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'conversation_unanswered', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
+        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'conversation_unanswered', 'message_keyword', 'message_first_contact', 'comment_keyword', 'deal_stage_changed'] },
         trigger_config: { type: 'object' },
         conditions:     { type: 'object' },
         actions:        { type: 'array', items: { type: 'object' } },

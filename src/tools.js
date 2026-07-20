@@ -606,13 +606,13 @@ export const tools = [
 
   {
     name: 'createCrmAutomation',
-    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, message_keyword {keywords[]}, message_first_contact {}, deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
+    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, conversation_unanswered {minutes} (conversation with no reply for X minutes), message_keyword {keywords[]}, message_first_contact {}, deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
     inputSchema: {
       type: 'object',
       required: ['name', 'trigger_type', 'actions'],
       properties: {
         name:           { type: 'string' },
-        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
+        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'conversation_unanswered', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
         trigger_config: { type: 'object', description: 'Per trigger type (see description)' },
         conditions:     { type: 'object', properties: { label_id: { type: 'string', description: 'Only run for contacts with this label' } } },
         actions:        { type: 'array', items: { type: 'object' }, description: 'See description for action shapes' },
@@ -631,7 +631,7 @@ export const tools = [
       properties: {
         id:             { type: 'string', description: 'Automation UUID' },
         name:           { type: 'string' },
-        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
+        trigger_type:   { type: 'string', enum: ['date_birthday', 'date_inactivity', 'date_followup', 'conversation_unanswered', 'message_keyword', 'message_first_contact', 'deal_stage_changed'] },
         trigger_config: { type: 'object' },
         conditions:     { type: 'object' },
         actions:        { type: 'array', items: { type: 'object' } },

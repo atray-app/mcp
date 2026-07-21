@@ -606,7 +606,7 @@ export const tools = [
 
   {
     name: 'createCrmAutomation',
-    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, conversation_unanswered {minutes} (conversation with no reply for X minutes), message_keyword {keywords[]}, message_first_contact {}, comment_keyword {keywords[]} (Instagram comment on a post/reel containing any of the keywords), deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}, start_sequence {sequence_id}, reply_comment {template_text} (public reply to the comment), send_dm {template_text} (private reply Direct to the commenter - Meta allows 1 per comment, within 7 days). reply_comment/send_dm only make sense with the comment_keyword trigger. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
+    description: 'Creates a CRM automation. Triggers: date_birthday {days_before}, date_inactivity {inactivity_days}, date_followup {days_after}, conversation_unanswered {minutes} (conversation with no reply for X minutes), message_keyword {keywords[]}, message_first_contact {}, comment_keyword {keywords[]} (Instagram comment on a post/reel containing any of the keywords), deal_stage_changed {stage_id}. Actions (max 5, in order): send_message (via "template" with template_text using {{nome}}/{{primeiro_nome}}/{{empresa}} placeholders, or via "agent" with instruction), notify_human, move_deal_stage {stage_id}, create_task {title, due_in_days}, start_sequence {sequence_id}, reply_comment {template_text} (public reply to the comment), send_dm {template_text} (private reply Direct to the commenter - Meta allows 1 per comment, within 7 days), add_label {label_id} / remove_label {label_id} (tag the contact; idempotent). reply_comment/send_dm only make sense with the comment_keyword trigger. Labels are a trail/categorization, not state: pair deal_stage_changed with remove_label (previous column) + add_label (new column) to keep them current without human discipline. Messages respect opt-out, daily cap per contact and quiet hours 21h-8h.',
     inputSchema: {
       type: 'object',
       required: ['name', 'trigger_type', 'actions'],
@@ -663,6 +663,7 @@ export const tools = [
             escalation_jid:          { type: 'string', description: 'Phone/group that receives escalation alerts' },
             included_label_ids:      { type: 'array', items: { type: 'string' }, description: 'Label UUIDs: agent only handles contacts with any of these labels. Empty = handle everyone.' },
             excluded_label_ids:      { type: 'array', items: { type: 'string' }, description: 'Label UUIDs: agent never handles contacts with these labels (e.g. family/friends). This ALWAYS wins over included_label_ids.' },
+            audience:                { type: 'object', description: 'Who this agent answers on the connection: {stage:"customer"} = only recognized customers, {stage:"lead"} = only leads, null = everyone else (default agent). One active agent per audience per connection: this is what lets two agents share the same number.' },
           },
         },
       },
@@ -692,6 +693,7 @@ export const tools = [
             escalation_jid:          { type: 'string', description: 'Phone/group that receives escalation alerts' },
             included_label_ids:      { type: 'array', items: { type: 'string' }, description: 'Label UUIDs: agent only handles contacts with any of these labels. Empty = handle everyone.' },
             excluded_label_ids:      { type: 'array', items: { type: 'string' }, description: 'Label UUIDs: agent never handles contacts with these labels (e.g. family/friends). This ALWAYS wins over included_label_ids.' },
+            audience:                { type: 'object', description: 'Who this agent answers on the connection: {stage:"customer"} = only recognized customers, {stage:"lead"} = only leads, null = everyone else (default agent). One active agent per audience per connection: this is what lets two agents share the same number.' },
           },
         },
       },

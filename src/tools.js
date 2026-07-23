@@ -562,6 +562,53 @@ export const tools = [
   },
 
   {
+    name: 'listCrmOffers',
+    description: 'Lists the account offer catalog (T-498): name, description, price in cents, currency and external payment link. Active offers are the AI agent\'s source of truth for prices (tools listar_ofertas / enviar_link_oferta).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        q:      { type: 'string', description: 'Search by name or description' },
+        active: { type: 'string', enum: ['true', 'false'], description: 'Filter by active state; omit for all' },
+      },
+    },
+  },
+
+  {
+    name: 'createCrmOffer',
+    description: 'Creates an offer in the catalog. price_cents is the price in cents; payment_link is the external http(s) checkout URL (client\'s own Stripe, Woovi, etc). Active offers are immediately offered by the AI agent.',
+    inputSchema: {
+      type: 'object',
+      required: ['name', 'price_cents', 'payment_link'],
+      properties: {
+        name:         { type: 'string' },
+        description:  { type: 'string' },
+        price_cents:  { type: 'integer', minimum: 0, description: 'Price in cents' },
+        currency:     { type: 'string', description: '3-letter code, default BRL' },
+        payment_link: { type: 'string', description: 'External http(s) payment/checkout URL' },
+        is_active:    { type: 'boolean', description: 'Default true' },
+      },
+    },
+  },
+
+  {
+    name: 'updateCrmOffer',
+    description: 'Updates an offer (partial: only send the fields to change). is_active: false hides it from the AI agent immediately.',
+    inputSchema: {
+      type: 'object',
+      required: ['id'],
+      properties: {
+        id:           { type: 'string', description: 'Offer UUID' },
+        name:         { type: 'string' },
+        description:  { type: 'string' },
+        price_cents:  { type: 'integer', minimum: 0 },
+        currency:     { type: 'string' },
+        payment_link: { type: 'string' },
+        is_active:    { type: 'boolean' },
+      },
+    },
+  },
+
+  {
     name: 'listCrmSequences',
     description: 'Lists follow-up sequences (multi-step cadences with waits; stop-on-reply) with step and enrollment counts.',
     inputSchema: { type: 'object', properties: {} },

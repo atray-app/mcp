@@ -168,6 +168,17 @@ async function callTool(name, a) {
       return api.put(`/crm/automations/${id}`, body);
     }
 
+    case 'listCrmOffers':
+      return api.get('/crm/offers', a);
+
+    case 'createCrmOffer':
+      return api.post('/crm/offers', a);
+
+    case 'updateCrmOffer': {
+      const { id, ...body } = a;
+      return api.put(`/crm/offers/${id}`, body);
+    }
+
     case 'listCrmSequences':
       return api.get('/crm/sequences');
 

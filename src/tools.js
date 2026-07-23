@@ -563,7 +563,7 @@ export const tools = [
 
   {
     name: 'listCrmOffers',
-    description: 'Lists the account offer catalog (T-498): name, description, price in cents, currency and external payment link. Active offers are the AI agent\'s source of truth for prices (tools listar_ofertas / enviar_link_oferta).',
+    description: 'Lists the account offer catalog (T-498): name, description, price in cents, currency and external payment link. Active offers are the AI agent\'s source of truth for prices (tools list_offers / send_offer_link).',
     inputSchema: {
       type: 'object',
       properties: {

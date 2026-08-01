@@ -1,13 +1,13 @@
+# syntax=docker/dockerfile:1
 # Imagem do transporte HTTP (mcp.atray.app). O uso stdio (Claude Desktop/Code) continua
 # sendo o pacote npm @atray/mcp - não precisa de container.
 FROM node:24-alpine
 
-RUN apk add --no-cache wget
-
 WORKDIR /app
 
+# Cache do npm preservado entre builds frios (mesmo motivo do hooks).
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 COPY src ./src
 

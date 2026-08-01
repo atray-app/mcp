@@ -5,9 +5,13 @@
  * Schema convention:
  *   inputSchema follows JSON Schema (Draft 7) - the MCP SDK validates inputs before calling handler.
  *   All IDs are UUID strings. All dates are ISO-8601.
+ *
+ * As annotations (readOnlyHint/destructiveHint/idempotentHint/openWorldHint) ficam na tabela
+ * ANNOTATIONS no fim do arquivo, aplicada a toda tool na exportação: uma tabela única é o que
+ * permite auditar as 47 de uma olhada, e o teste garante que nenhuma fique de fora.
  */
 
-export const tools = [
+const toolDefs = [
   // ─── BRAND ────────────────────────────────────────────────────────────────
 
   {
@@ -755,3 +759,93 @@ export const tools = [
     inputSchema: { type: 'object', properties: {} },
   },
 ];
+
+/**
+ * Annotations (MCP spec) - dicas de comportamento pro cliente decidir o que pedir confirmação.
+ * Anotação que não bate com o comportamento real é causa comum de rejeição no review da OpenAI,
+ * então a régua aqui é conservadora: só prometemos o que a API garante.
+ *
+ *   readOnlyHint    - não altera nada: só as tools de leitura (list e get).
+ *   destructiveHint - efeito irreversível ou perda de dado: publicar, enviar mensagem, apagar,
+ *                     regenerar/substituir conteúdo existente, importar em massa (faz merge),
+ *                     ativar agente (desativa os outros da mesma conexão).
+ *   idempotentHint  - repetir com os mesmos argumentos não muda mais nada: só os PUT de update.
+ *                     Criar, enviar, regenerar e agendar NÃO são idempotentes (custam crédito
+ *                     ou geram registro novo a cada chamada).
+ *   openWorldHint   - toca o mundo fora da ATRAY: Instagram/WhatsApp, provedor de IA, download
+ *                     de URL. CRUD dentro da conta do usuário é domínio fechado (false).
+ */
+const RO = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
+const WRITE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
+const UPDATE = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false };
+const DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false };
+const AI_WRITE = { ...WRITE, openWorldHint: true };
+const AI_DESTRUCTIVE = { ...DESTRUCTIVE, openWorldHint: true };
+
+const ANNOTATIONS = {
+  // brand
+  getBrandProfile: RO,
+  updateBrandProfile: UPDATE,
+  // campaigns — createCampaign gera texto/imagem por IA e consome quota de posts
+  listCampaigns: RO,
+  createCampaign: AI_WRITE,
+  getCampaign: RO,
+  updateCampaign: UPDATE,
+  listCampaignPosts: RO,
+  // posts
+  listPosts: RO,
+  createPost: AI_WRITE,
+  getPost: RO,
+  updatePost: UPDATE,
+  deletePost: DESTRUCTIVE,
+  regeneratePostText: AI_DESTRUCTIVE,   // sobrescreve o texto atual, sem volta
+  regeneratePostImage: AI_DESTRUCTIVE,  // idem para a arte
+  uploadPostImage: AI_DESTRUCTIVE,      // substitui a mídia do post; baixa URL externa
+  uploadPostVideo: AI_DESTRUCTIVE,
+  // social / publicação
+  listSocialConnections: RO,
+  schedulePost: AI_DESTRUCTIVE,         // publica no Instagram de verdade: irreversível
+  // crm — contatos
+  listCrmContacts: RO,
+  getCrmContact: RO,
+  createCrmContact: WRITE,
+  updateCrmContact: UPDATE,
+  importCrmContacts: DESTRUCTIVE,       // merge em massa sobre contatos existentes
+  listCrmLabels: RO,
+  // crm — pipeline e negócios
+  listCrmPipelines: RO,
+  getCrmPipelineBoard: RO,
+  listCrmDeals: RO,
+  createCrmDeal: WRITE,
+  getCrmDeal: RO,
+  updateCrmDeal: UPDATE,
+  moveCrmDealStage: UPDATE,
+  // crm — conversas
+  listCrmConversations: RO,
+  getCrmConversationMessages: RO,
+  sendCrmMessage: AI_DESTRUCTIVE,       // envia de verdade no WhatsApp/Instagram e pausa o agente
+  getCrmDashboardOverview: RO,
+  // crm — automações, ofertas, sequências
+  listCrmAutomations: RO,
+  createCrmAutomation: WRITE,
+  updateCrmAutomation: UPDATE,
+  listCrmOffers: RO,
+  createCrmOffer: WRITE,
+  updateCrmOffer: UPDATE,
+  listCrmSequences: RO,
+  enrollContactInSequence: AI_DESTRUCTIVE, // dispara mensagens reais pro contato
+  // crm — agentes: ativar um desativa os outros que dividem a conexão
+  listCrmAgents: RO,
+  createCrmAgent: DESTRUCTIVE,
+  updateCrmAgent: { ...DESTRUCTIVE, idempotentHint: true },
+  // billing
+  getBillingUsage: RO,
+};
+
+export const tools = toolDefs.map((tool) => {
+  const annotations = ANNOTATIONS[tool.name];
+  if (!annotations) throw new Error(`Tool sem annotations em ANNOTATIONS: ${tool.name}`);
+  return { ...tool, annotations: { ...annotations } };
+});
+
+export { ANNOTATIONS };

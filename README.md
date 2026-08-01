@@ -49,6 +49,8 @@ Restart the client and the ATRAY tools become available.
 | `ATRAY_API_KEY` | yes | - | Your ATRAY API key (`atray_...`). |
 | `ATRAY_API_URL` | no | `https://api.atray.app` | Override the API base URL (for self-hosted / staging). |
 
+The remote (HTTP) transport reads a few more - see [Remote transport](#remote-transport-http).
+
 ## Tools
 
 | Tool | What it does |
@@ -62,7 +64,8 @@ Restart the client and the ATRAY tools become available.
 | `listSocialConnections` | List your connected social accounts (read-only) to pick a publish target. |
 | `schedulePost` | Schedule/publish a post (omit `scheduled_at` to publish as soon as possible). |
 | `listCrmContacts` / `createCrmContact` / `getCrmContact` / `updateCrmContact` / `importCrmContacts` | Manage CRM contacts (import from CSV, tags, custom fields). |
-| `listCrmLists` | List contact lists (segments). |
+| `listCrmLabels` | List contact labels (segments). |
+| `listCrmOffers` / `createCrmOffer` / `updateCrmOffer` | Manage the offers the AI agent can quote and send a payment link for. |
 | `listCrmPipelines` / `getCrmPipelineBoard` | View sales pipelines and their kanban board. |
 | `listCrmDeals` / `createCrmDeal` / `getCrmDeal` / `updateCrmDeal` / `moveCrmDealStage` | Manage deals and move them across pipeline stages. |
 | `listCrmConversations` / `getCrmConversationMessages` | Read the WhatsApp inbox (conversations and message history). |
@@ -80,6 +83,45 @@ customer directly - review the text before calling it, since it is not reversibl
 > API keys are created and managed in the Studio (**Settings → Tools**), not through
 > the API/MCP.
 
+Every tool carries MCP `annotations` (`readOnlyHint`, `destructiveHint`, `idempotentHint`,
+`openWorldHint`) so a client can decide what to confirm before calling. `deletePost`,
+`schedulePost` (publishes for real), `sendCrmMessage` and `enrollContactInSequence` are the
+irreversible ones.
+
+## Remote transport (HTTP)
+
+Besides stdio, the server speaks **Streamable HTTP** (`src/http.js`), for clients that cannot
+run a local process - for example a remotely hosted connector. Tools and dispatch are shared
+with the stdio entrypoint (`src/server.js`); only the transport differs.
+
+```bash
+MCP_HTTP_PATH_SECRET=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=') \
+ATRAY_API_KEY=atray_your_key npm run start:http
+# POST/GET/DELETE http://localhost:3002/mcp/<MCP_HTTP_PATH_SECRET>
+```
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `MCP_HTTP_PATH_SECRET` | yes | - | Secret segment in the route (`/mcp/<secret>`). Comma-separated values are all accepted, which is how you rotate it. Minimum 24 chars; the server refuses to start without it. |
+| `PORT` | no | `3002` | Listen port. |
+| `MCP_HTTP_HOST` | no | `0.0.0.0` | Listen address. |
+| `MCP_HTTP_RATE_MAX` | no | `120` | Requests per IP per window. |
+| `MCP_HTTP_RATE_WINDOW_MS` | no | `60000` | Rate-limit window. |
+| `MCP_HTTP_SESSION_IDLE_MS` | no | `1800000` | Idle time before a session is dropped. |
+| `MCP_HTTP_MAX_BODY_BYTES` | no | `4194304` | Request body cap. |
+
+Security model of this phase, in short:
+
+- the ATRAY API key lives **only on the server**; the client never sends or sees it, and every
+  call acts on that key's account;
+- the secret in the path is the credential. Any other path answers `404` (not `401`), so the
+  endpoint does not announce itself; requests are rate limited per IP; the secret is never
+  logged;
+- `file_path` (local file upload) is **not** exposed over HTTP - on a remote server that path
+  would be the server's own disk. Use `image_url` / `video_url` instead;
+- put TLS and a reverse proxy in front. This is containment, not authorization: proper OAuth
+  is the next step.
+
 ## API reference
 
 Full interactive REST reference (Swagger): <https://api.atray.app/docs/>
@@ -90,10 +132,11 @@ Full interactive REST reference (Swagger): <https://api.atray.app/docs/>
 git clone https://github.com/atray-app/mcp.git
 cd mcp
 npm install
+npm test
 ATRAY_API_KEY=atray_your_key npm start
 ```
 
-The server speaks MCP over stdio.
+`npm start` speaks MCP over stdio; `npm run start:http` speaks Streamable HTTP.
 
 ## Links
 

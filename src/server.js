@@ -1,0 +1,326 @@
+/**
+ * Núcleo compartilhado do MCP da ATRAY.
+ *
+ * Os dois entrypoints (src/index.js = stdio, src/http.js = Streamable HTTP) importam daqui.
+ * A lista de tools e o dispatch NUNCA são duplicados: cópia gera drift (já aconteceu com o
+ * @atray/shared vendorado). Quem quiser um transporte novo importa createServer() e pronto.
+ */
+
+import { readFile } from 'node:fs/promises';
+import { basename } from 'node:path';
+
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+
+import { tools } from './tools.js';
+import { api } from './api.js';
+
+/** Manter em sincronia com a version do package.json (há teste que compara os dois). */
+export const VERSION = '1.7.0';
+
+/**
+ * Tools expostas por um transporte.
+ *
+ * `localFiles: false` (transporte HTTP remoto) remove o parâmetro `file_path` dos uploads:
+ * num servidor remoto esse caminho é o disco DO SERVIDOR, não o do usuário - manter o campo
+ * seria oferecer leitura arbitrária de arquivo do container a quem chamar a tool. Pela URL
+ * (`image_url`/`video_url`) continua funcionando.
+ */
+export function toolsFor({ localFiles = true } = {}) {
+  if (localFiles) return tools;
+  return tools.map((tool) => {
+    if (!tool.inputSchema?.properties?.file_path) return tool;
+    const { file_path, ...properties } = tool.inputSchema.properties;
+    return { ...tool, inputSchema: { ...tool.inputSchema, properties } };
+  });
+}
+
+/**
+ * Cria o servidor MCP já com os handlers de tools registrados. O transporte fica por conta
+ * de quem chama (`await server.connect(transport)`).
+ *
+ * @param {object}  [opts]
+ * @param {boolean} [opts.localFiles=true] - permite `file_path` (arquivo local) nos uploads.
+ */
+export function createServer({ localFiles = true } = {}) {
+  const exposed = toolsFor({ localFiles });
+  const server = new Server(
+    { name: 'atray-mcp', version: VERSION },
+    { capabilities: { tools: {} } }
+  );
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: exposed }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args = {} } = request.params;
+    try {
+      const result = await callTool(name, args, { localFiles });
+      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+    } catch (err) {
+      return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
+    }
+  });
+
+  return server;
+}
+
+export async function callTool(name, a, opts = {}) {
+  switch (name) {
+    // ─── BRAND ──────────────────────────────────────────────────────────────
+    case 'getBrandProfile':
+      return api.get('/brand/profile');
+
+    case 'updateBrandProfile':
+      return api.put('/brand/profile', a);
+
+    // ─── CAMPAIGNS ──────────────────────────────────────────────────────────
+    case 'listCampaigns':
+      return api.get('/campaigns', a);
+
+    case 'createCampaign':
+      return api.post('/campaigns', a);
+
+    case 'getCampaign': {
+      const { id, ...q } = a;
+      return api.get(`/campaigns/${id}`, q);
+    }
+
+    case 'updateCampaign': {
+      const { id, ...body } = a;
+      return api.put(`/campaigns/${id}`, body);
+    }
+
+    case 'listCampaignPosts': {
+      const { id, ...q } = a;
+      return api.get(`/campaigns/${id}/posts`, q);
+    }
+
+    // ─── POSTS ──────────────────────────────────────────────────────────────
+    case 'listPosts':
+      return api.get('/posts', a);
+
+    case 'createPost':
+      return api.post('/posts', a);
+
+    case 'getPost':
+      return api.get(`/posts/${a.id}`);
+
+    case 'updatePost': {
+      const { id, ...body } = a;
+      return api.put(`/posts/${id}`, body);
+    }
+
+    case 'deletePost':
+      return api.delete(`/posts/${a.id}`);
+
+    case 'regeneratePostText':
+      return api.post(`/posts/${a.id}/regenerate-text`);
+
+    case 'regeneratePostImage': {
+      const { id, ...body } = a;
+      return api.post(`/posts/${id}/regenerate-image`, body);
+    }
+
+    case 'uploadPostImage':
+      return uploadPostImage(a, opts);
+
+    case 'uploadPostVideo':
+      return uploadPostVideo(a, opts);
+
+    // ─── SOCIAL CONNECTIONS (read-only) ───────────────────────────────────────
+    case 'listSocialConnections':
+      return api.get('/social-connections');
+
+    // ─── PUBLISH / SCHEDULE ───────────────────────────────────────────────────
+    case 'schedulePost': {
+      const { id, ...body } = a;
+      return api.post(`/posts/${id}/schedule`, body);
+    }
+
+    // ─── CRM ──────────────────────────────────────────────────────────────────
+    case 'listCrmContacts':
+      return api.get('/crm/contacts', a);
+
+    case 'getCrmContact':
+      return api.get(`/crm/contacts/${a.id}`);
+
+    case 'createCrmContact':
+      return api.post('/crm/contacts', a);
+
+    case 'updateCrmContact': {
+      const { id, ...body } = a;
+      return api.put(`/crm/contacts/${id}`, body);
+    }
+
+    case 'importCrmContacts':
+      return api.post('/crm/contacts/import', a);
+
+    case 'listCrmLabels':
+      return api.get('/crm/labels');
+
+    case 'listCrmPipelines':
+      return api.get('/crm/pipelines');
+
+    case 'getCrmPipelineBoard':
+      return api.get(`/crm/pipelines/${a.id}/board`);
+
+    case 'listCrmDeals':
+      return api.get('/crm/deals', a);
+
+    case 'createCrmDeal':
+      return api.post('/crm/deals', a);
+
+    case 'getCrmDeal':
+      return api.get(`/crm/deals/${a.id}`);
+
+    case 'updateCrmDeal': {
+      const { id, ...body } = a;
+      return api.put(`/crm/deals/${id}`, body);
+    }
+
+    case 'moveCrmDealStage':
+      return api.put(`/crm/deals/${a.id}/stage`, { stage_id: a.stage_id });
+
+    case 'listCrmConversations':
+      return api.get('/crm/conversations', a);
+
+    case 'getCrmConversationMessages': {
+      const { id, ...q } = a;
+      return api.get(`/crm/conversations/${id}/messages`, q);
+    }
+
+    case 'sendCrmMessage':
+      return api.post(`/crm/conversations/${a.id}/messages`, { text: a.text });
+
+    case 'getCrmDashboardOverview':
+      return api.get('/crm/dashboard/overview', a);
+
+    case 'listCrmAutomations':
+      return api.get('/crm/automations');
+
+    case 'createCrmAutomation':
+      return api.post('/crm/automations', a);
+
+    case 'updateCrmAutomation': {
+      const { id, ...body } = a;
+      return api.put(`/crm/automations/${id}`, body);
+    }
+
+    case 'listCrmOffers':
+      return api.get('/crm/offers', a);
+
+    case 'createCrmOffer':
+      return api.post('/crm/offers', a);
+
+    case 'updateCrmOffer': {
+      const { id, ...body } = a;
+      return api.put(`/crm/offers/${id}`, body);
+    }
+
+    case 'listCrmSequences':
+      return api.get('/crm/sequences');
+
+    case 'enrollContactInSequence':
+      return api.post(`/crm/sequences/${a.sequence_id}/enroll`, { contact_id: a.contact_id });
+
+    case 'listCrmAgents':
+      return api.get('/crm/agents');
+
+    case 'createCrmAgent':
+      return api.post('/crm/agents', a);
+
+    case 'updateCrmAgent': {
+      const { id, ...body } = a;
+      return api.put(`/crm/agents/${id}`, body);
+    }
+
+    // ─── BILLING ────────────────────────────────────────────────────────────
+    case 'getBillingUsage':
+      return api.get('/billing/usage');
+
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
+const NO_LOCAL_FILES = 'file_path is not available on the remote server: use image_url/video_url (public URL) instead';
+
+const IMAGE_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+
+async function uploadPostImage({ id, file_path, image_url, slot_index }, { localFiles = true } = {}) {
+  if (!id) throw new Error('id (post UUID) is required');
+  if (file_path && !localFiles) throw new Error(NO_LOCAL_FILES);
+  if (!file_path && !image_url) {
+    throw new Error(localFiles
+      ? 'Provide file_path (local file) or image_url (public URL)'
+      : 'Provide image_url (public URL)');
+  }
+
+  let buffer;
+  let filename;
+  if (file_path) {
+    buffer = await readFile(file_path);
+    filename = basename(file_path);
+  } else {
+    const res = await fetch(image_url);
+    if (!res.ok) throw new Error(`Failed to download image_url: HTTP ${res.status}`);
+    buffer = Buffer.from(await res.arrayBuffer());
+    filename = basename(new URL(image_url).pathname) || 'image.jpg';
+    if (!/\.(jpg|jpeg|png|webp)$/i.test(filename)) {
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      const ext = Object.keys(IMAGE_MIME).find((k) => IMAGE_MIME[k] === ct.split(';')[0].trim());
+      if (ext) filename = 'image.' + ext;
+    }
+  }
+
+  const m = filename.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/);
+  if (!m) throw new Error('Image must be .jpg, .jpeg, .png or .webp');
+
+  const base64 = buffer.toString('base64');
+  const ext = m[1] === 'jpg' ? 'jpeg' : m[1];
+  const body = { image: `data:image/${ext};base64,${base64}`, filename };
+  if (slot_index != null) body.slot_index = Number(slot_index);
+  return api.post(`/posts/${id}/image`, body);
+}
+
+const VIDEO_MIME = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm' };
+const VIDEO_MAX_BYTES = 120 * 1024 * 1024;
+
+/** Sobe um vídeo (arquivo local ou URL) como mídia do post. Publicado no Instagram vira Reel. */
+async function uploadPostVideo({ id, file_path, video_url }, { localFiles = true } = {}) {
+  if (!id) throw new Error('id (post UUID) is required');
+  if (file_path && !localFiles) throw new Error(NO_LOCAL_FILES);
+  if (!file_path && !video_url) {
+    throw new Error(localFiles
+      ? 'Provide file_path (local file) or video_url (public URL)'
+      : 'Provide video_url (public URL)');
+  }
+
+  let buffer;
+  let filename;
+  if (file_path) {
+    buffer = await readFile(file_path);
+    filename = basename(file_path);
+  } else {
+    const res = await fetch(video_url);
+    if (!res.ok) throw new Error(`Failed to download video_url: HTTP ${res.status}`);
+    buffer = Buffer.from(await res.arrayBuffer());
+    filename = basename(new URL(video_url).pathname) || 'video.mp4';
+    if (!/\.(mp4|mov|webm)$/i.test(filename)) {
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      const ext = Object.keys(VIDEO_MIME).find((k) => VIDEO_MIME[k] === ct.split(';')[0].trim());
+      if (ext) filename = 'video.' + ext;
+    }
+  }
+
+  const m = filename.toLowerCase().match(/\.(mp4|mov|webm)$/);
+  if (!m) throw new Error('Video must be .mp4, .mov or .webm');
+  if (buffer.length > VIDEO_MAX_BYTES) throw new Error('Video exceeds the 120 MB limit');
+
+  return api.upload(`/posts/${id}/video`, {
+    field: 'video',
+    buffer,
+    filename,
+    contentType: VIDEO_MIME[m[1]],
+  });
+}

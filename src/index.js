@@ -8,6 +8,10 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { createServer } from './server.js';
 
+if (!process.env.ATRAY_API_KEY) {
+  process.stderr.write('[atray-mcp] WARNING: ATRAY_API_KEY not set\n');
+}
+
 const server = createServer({ localFiles: true });
 const transport = new StdioServerTransport();
 await server.connect(transport);

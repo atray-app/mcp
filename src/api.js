@@ -1,70 +1,83 @@
 /**
- * Thin HTTP client for the ATRAY API.
- * All requests are authenticated via the ATRAY_API_KEY environment variable.
+ * Cliente HTTP fino da API da ATRAY.
+ *
+ * ── POR QUE ISTO VIROU UMA FÁBRICA (T-924) ────────────────────────────────────────────────
+ * Até a fase 1 a credencial era lida do módulo (`process.env.ATRAY_API_KEY` no topo do
+ * arquivo): uma chave por PROCESSO. No stdio isso é correto - o processo é do usuário. No
+ * servidor remoto multi-tenant é o defeito mais perigoso possível: estado de módulo é
+ * compartilhado por todas as requisições simultâneas, então dois clientes conectados ao mesmo
+ * container leriam a conta um do outro. Não existe jeito seguro de "trocar a chave global antes
+ * de cada chamada" - duas requisições concorrentes se atropelam entre a troca e o fetch.
+ *
+ * Por isso a credencial passou a ser argumento: `createApi({ token })` devolve um cliente
+ * isolado, criado por requisição no http.js e descartado com ela. O `api` exportado no fim é o
+ * de sempre (lê a env), para o stdio continuar funcionando sem mudar uma linha.
  */
 
-const BASE_URL = (process.env.ATRAY_API_URL || 'https://api.atray.app').replace(/\/$/, '');
-const API_KEY  = process.env.ATRAY_API_KEY || '';
-
-if (!API_KEY) {
-  process.stderr.write('[atray-mcp] WARNING: ATRAY_API_KEY not set\n');
-}
+const DEFAULT_BASE_URL = (process.env.ATRAY_API_URL || 'https://api.atray.app').replace(/\/$/, '');
 
 /**
- * @param {string} method  - HTTP method (GET, POST, PUT, PATCH, DELETE)
- * @param {string} path    - API path, e.g. '/campaigns'
- * @param {object} [body]  - Request body (JSON)
- * @param {object} [query] - Query string params
+ * @param {object} opts
+ * @param {string} opts.token   - credencial no Authorization: API key (atray_...) ou access token do OAuth (mcp_at_...)
+ * @param {string} [opts.baseUrl]
  */
-async function request(method, path, { body, query } = {}) {
-  let url = BASE_URL + path;
+export function createApi({ token, baseUrl = DEFAULT_BASE_URL } = {}) {
+  const base = String(baseUrl || DEFAULT_BASE_URL).replace(/\/$/, '');
+  const credential = token || '';
 
-  if (query) {
-    const params = Object.entries(query)
-      .filter(([, v]) => v !== undefined && v !== null && v !== '')
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
-    if (params.length) url += '?' + params.join('&');
+  async function request(method, path, { body, query } = {}) {
+    let url = base + path;
+
+    if (query) {
+      const params = Object.entries(query)
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`);
+      if (params.length) url += '?' + params.join('&');
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${credential}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+    return parseResponse(res);
   }
 
-  const headers = {
-    'Authorization': `Bearer ${API_KEY}`,
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+  /**
+   * Multipart/form-data upload (e.g. post video). The Content-Type header
+   * (with boundary) is set automatically by fetch from the FormData body.
+   */
+  async function upload(path, { field, buffer, filename, contentType }) {
+    const form = new FormData();
+    form.append(field, new Blob([buffer], { type: contentType }), filename);
+
+    const res = await fetch(base + path, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${credential}`,
+        'Accept': 'application/json',
+      },
+      body: form,
+    });
+
+    return parseResponse(res);
+  }
+
+  return {
+    get: (path, query) => request('GET', path, { query }),
+    post: (path, body, query) => request('POST', path, { body, query }),
+    put: (path, body) => request('PUT', path, { body }),
+    patch: (path, body) => request('PATCH', path, { body }),
+    delete: (path) => request('DELETE', path),
+    upload,
   };
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
-
-  return parseResponse(res);
-}
-
-/**
- * Multipart/form-data upload (e.g. post video). The Content-Type header
- * (with boundary) is set automatically by fetch from the FormData body.
- * @param {string} path        - API path, e.g. '/posts/<id>/video'
- * @param {object} opts
- * @param {string} opts.field       - Form field name, e.g. 'video'
- * @param {Buffer} opts.buffer      - File contents
- * @param {string} opts.filename    - Original file name (extension matters)
- * @param {string} opts.contentType - File MIME type
- */
-async function upload(path, { field, buffer, filename, contentType }) {
-  const form = new FormData();
-  form.append(field, new Blob([buffer], { type: contentType }), filename);
-
-  const res = await fetch(BASE_URL + path, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Accept': 'application/json',
-    },
-    body: form,
-  });
-
-  return parseResponse(res);
 }
 
 async function parseResponse(res) {
@@ -83,11 +96,11 @@ async function parseResponse(res) {
   return data;
 }
 
-export const api = {
-  get:    (path, query)       => request('GET',    path, { query }),
-  post:   (path, body, query) => request('POST',   path, { body, query }),
-  put:    (path, body)        => request('PUT',    path, { body }),
-  patch:  (path, body)        => request('PATCH',  path, { body }),
-  delete: (path)              => request('DELETE', path),
-  upload,
-};
+/**
+ * Cliente padrão do uso stdio: credencial da env, um processo por usuário.
+ *
+ * O aviso de env ausente saiu daqui (T-924): no servidor remoto com OAuth não existe
+ * ATRAY_API_KEY - a credencial vem do token da requisição - e o aviso assustava sem motivo.
+ * Quem avisa agora é o index.js, que é o entrypoint em que a env de fato importa.
+ */
+export const api = createApi({ token: process.env.ATRAY_API_KEY || '' });

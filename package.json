@@ -1,13 +1,25 @@
 {
   "name": "@atray/mcp",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "MCP server for ATRAY API - manage campaigns, posts and brand profile via AI",
   "type": "module",
+  "main": "./src/server.js",
   "bin": {
     "atray-mcp": "./src/index.js"
   },
+  "exports": {
+    ".": "./src/server.js",
+    "./tools": "./src/tools.js",
+    "./api": "./src/api.js",
+    "./scopes": "./src/scopes.js"
+  },
+  "//files": "T-924 parte A: lista EXPLÍCITA em vez de 'src/'. O src/http.js é servidor nosso, não biblioteca de cliente - publicá-lo no npm entregava o desenho do mcp.atray.app (rotas, formato do 404, nomes das envs) a quem baixasse o tarball. Ele continua no repo porque é o que o Dockerfile constrói; quando o repo privado do servidor existir (ver docs/t924-mcp-servidor-remoto.md) sai daqui de vez.",
   "files": [
-    "src/"
+    "src/index.js",
+    "src/server.js",
+    "src/tools.js",
+    "src/api.js",
+    "src/scopes.js"
   ],
   "publishConfig": {
     "access": "public"

@@ -13,10 +13,11 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { tools } from './tools.js';
-import { api } from './api.js';
+import { api as defaultApi } from './api.js';
+import { TOOL_SCOPES, allowedByScope } from './scopes.js';
 
 /** Manter em sincronia com a version do package.json (há teste que compara os dois). */
-export const VERSION = '1.7.0';
+export const VERSION = '1.8.0';
 
 /**
  * Tools expostas por um transporte.
@@ -25,10 +26,16 @@ export const VERSION = '1.7.0';
  * num servidor remoto esse caminho é o disco DO SERVIDOR, não o do usuário - manter o campo
  * seria oferecer leitura arbitrária de arquivo do container a quem chamar a tool. Pela URL
  * (`image_url`/`video_url`) continua funcionando.
+ *
+ * `scope` (T-924) filtra pelo que o usuário autorizou. É CONVENIÊNCIA, não autorização: quem
+ * decide de verdade é a api, que confere o escopo do token a cada requisição. Aqui serve para
+ * o cliente de IA não oferecer ao usuário um botão que vai voltar 403 - e para o modelo não
+ * gastar rodada tentando publicar quando só recebeu leitura.
  */
-export function toolsFor({ localFiles = true } = {}) {
-  if (localFiles) return tools;
-  return tools.map((tool) => {
+export function toolsFor({ localFiles = true, scope = null } = {}) {
+  const visible = scope == null ? tools : tools.filter((tool) => allowedByScope(tool.name, scope));
+  if (localFiles) return visible;
+  return visible.map((tool) => {
     if (!tool.inputSchema?.properties?.file_path) return tool;
     const { file_path, ...properties } = tool.inputSchema.properties;
     return { ...tool, inputSchema: { ...tool.inputSchema, properties } };
@@ -41,9 +48,13 @@ export function toolsFor({ localFiles = true } = {}) {
  *
  * @param {object}  [opts]
  * @param {boolean} [opts.localFiles=true] - permite `file_path` (arquivo local) nos uploads.
+ * @param {object}  [opts.api]  - cliente da API para ESTA sessão. Sem ele usa o da env (stdio).
+ *                                No servidor remoto multi-tenant é obrigatório passar: é o que
+ *                                amarra a sessão a uma conta e impede uma enxergar a outra.
+ * @param {string}  [opts.scope] - escopos concedidos ao token, separados por espaço.
  */
-export function createServer({ localFiles = true } = {}) {
-  const exposed = toolsFor({ localFiles });
+export function createServer({ localFiles = true, api = defaultApi, scope = null } = {}) {
+  const exposed = toolsFor({ localFiles, scope });
   const server = new Server(
     { name: 'atray-mcp', version: VERSION },
     { capabilities: { tools: {} } }
@@ -54,7 +65,15 @@ export function createServer({ localFiles = true } = {}) {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args = {} } = request.params;
     try {
-      const result = await callTool(name, args, { localFiles });
+      if (scope != null && !allowedByScope(name, scope)) {
+        const needed = TOOL_SCOPES[name];
+        throw new Error(
+          `Sem permissão para "${name}": este aplicativo recebeu ${scope || 'nenhuma permissão'}` +
+          (needed ? ` e a ação exige ${needed}.` : '.') +
+          ' Reconecte a ATRAY autorizando a permissão que falta.'
+        );
+      }
+      const result = await callTool(name, args, { localFiles, api });
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (err) {
       return { content: [{ type: 'text', text: `Error: ${err.message}` }], isError: true };
@@ -65,6 +84,9 @@ export function createServer({ localFiles = true } = {}) {
 }
 
 export async function callTool(name, a, opts = {}) {
+  // T-924: o cliente vem por ARGUMENTO, nunca do módulo. É a linha que separa uma conta da
+  // outra quando duas requisições correm ao mesmo tempo no mesmo container.
+  const { api = defaultApi } = opts;
   switch (name) {
     // ─── BRAND ──────────────────────────────────────────────────────────────
     case 'getBrandProfile':
@@ -247,7 +269,7 @@ const NO_LOCAL_FILES = 'file_path is not available on the remote server: use ima
 
 const IMAGE_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 
-async function uploadPostImage({ id, file_path, image_url, slot_index }, { localFiles = true } = {}) {
+async function uploadPostImage({ id, file_path, image_url, slot_index }, { localFiles = true, api = defaultApi } = {}) {
   if (!id) throw new Error('id (post UUID) is required');
   if (file_path && !localFiles) throw new Error(NO_LOCAL_FILES);
   if (!file_path && !image_url) {
@@ -287,7 +309,7 @@ const VIDEO_MIME = { mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm
 const VIDEO_MAX_BYTES = 120 * 1024 * 1024;
 
 /** Sobe um vídeo (arquivo local ou URL) como mídia do post. Publicado no Instagram vira Reel. */
-async function uploadPostVideo({ id, file_path, video_url }, { localFiles = true } = {}) {
+async function uploadPostVideo({ id, file_path, video_url }, { localFiles = true, api = defaultApi } = {}) {
   if (!id) throw new Error('id (post UUID) is required');
   if (file_path && !localFiles) throw new Error(NO_LOCAL_FILES);
   if (!file_path && !video_url) {

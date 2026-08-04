@@ -78,11 +78,12 @@ after(() => {
   api?.close();
 });
 
-test('path sem o segredo responde 404, não 401 (não sinaliza que existe)', async () => {
-  for (const path of ['/', '/mcp', '/mcp/errado', '/mcp/' + SECRET + 'x']) {
+test('rota legada: path sem o segredo responde 404, não 401 (não sinaliza que existe)', async () => {
+  // `/mcp` sai desta lista na fase 2: lá o 401 é o contrato, e é ele que ensina a descoberta.
+  for (const path of ['/', '/mcp/errado', '/mcp/' + SECRET + 'x']) {
     const res = await fetch(srv.base + path, { method: 'POST', headers: HEADERS, body: '{}' });
     assert.equal(res.status, 404, `${path} deveria ser 404`);
-    assert.ok(!res.headers.get('www-authenticate'), `${path} não pode devolver WWW-Authenticate na fase 1`);
+    assert.ok(!res.headers.get('www-authenticate'), `${path} não pode devolver WWW-Authenticate`);
   }
 });
 
@@ -179,17 +180,19 @@ test('rate limit por IP devolve 429 com Retry-After', async () => {
   }
 });
 
-test('sem MCP_HTTP_PATH_SECRET o servidor se recusa a subir', async () => {
+test('sem NENHUM modo de autenticação o servidor se recusa a subir', async () => {
+  // Na fase 2 o OAuth sozinho basta para subir (é o modo normal). O que não pode existir é um
+  // servidor sem autenticação nenhuma - por isso o teste desliga o OAuth também.
   const child = spawn(process.execPath, ['src/http.js'], {
     cwd: new URL('..', import.meta.url).pathname,
-    env: { ...process.env, PORT: String(await freePort()), MCP_HTTP_PATH_SECRET: '' },
+    env: { ...process.env, PORT: String(await freePort()), MCP_HTTP_PATH_SECRET: '', MCP_OAUTH_ENABLED: 'false' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let err = '';
   child.stderr.on('data', (d) => { err += d; });
   const [code] = await once(child, 'exit');
   assert.equal(code, 1);
-  assert.match(err, /MCP_HTTP_PATH_SECRET/);
+  assert.match(err, /autentica/i);
 });
 
 test('segredo curto também barra o boot', async () => {

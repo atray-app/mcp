@@ -18,4 +18,9 @@ ENV GIT_SHA=$GIT_SHA BUILD_AT=$BUILD_AT
 ENV NODE_ENV=production
 EXPOSE 3002
 
+# T-616: roda como usuário não-root. Dá para fazer aqui e não na api/hooks porque este
+# container não escreve em disco nem monta volume - só fala HTTP com a api. O usuário `node`
+# já vem na imagem oficial; os arquivos de /app ficam de root, e o processo só os lê.
+USER node
+
 CMD ["node", "src/http.js"]
